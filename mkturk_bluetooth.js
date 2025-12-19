@@ -135,8 +135,6 @@ async function requestBLEDevice(){
         console.log('Calling navigator.bluetooth.requestDevice...');
         device = await navigator.bluetooth.requestDevice(options)
         console.log("found a device",device)
-        device = await navigator.bluetooth.requestDevice(options)
-        console.log("found a device",device)
         console.log(device.name)
         console.log(device.uuids)
         console.log('Attempting to connect to GATT server...');
@@ -146,7 +144,7 @@ async function requestBLEDevice(){
         console.log('Available services:', services);
         services.forEach(service => {
         console.log('Service UUID:', service.uuid);
-  
+        })
         var textstr = "found a device name: " + device.name + "<br>" + "id: " + device.id
         ble.statustext = textstr
         updateStatusText()

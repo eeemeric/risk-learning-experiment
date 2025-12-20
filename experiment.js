@@ -58,10 +58,13 @@ class RewardFeedback {
     determineRewardCount(chosenStimulus) {
         // Map your sure stimuli to reward counts
         const sureValues = {
-            'sure_1_token.png': 1,
-            'sure_2_tokens.png': 2,
-            'sure_3_tokens.png': 3,
-            'sure_4_tokens.png': 4
+            'Sure1.png': 1,
+            'Sure2.png': 2,
+            'Sure3.png': 3,
+            'Sure4.png': 4,
+            'Sure5.png': 5,
+            'Sure6.png': 6,
+            'Sure7.png': 7
         };
         
         return sureValues[chosenStimulus] || 0;
@@ -123,64 +126,59 @@ function clearDisplay() {
 }
 
 // ========================================
-// 4. CHOICE PRESENTATION (ONE AT A TIME)
+// 4. SINGLE STIMULUS PRESENTATION 
 // ========================================
 
-async function presentChoicesSequential(choice1Path, choice2Path) {
+async function presentSingleStimulus(stimulusPath) {
     return new Promise((resolve) => {
-        let selectedChoice = null;
-        
         // Clear display
         clearDisplay();
         
-        // Show first choice in center
-        const firstStimulus = showStimulus(choice1Path, 'center');
+        // Randomly choose left or right position
+        const position = Math.random() > 0.5 ? 'left' : 'right';
         
-        // Add click handler for first choice
-        const handleFirstClick = () => {
-            selectedChoice = choice1Path;
-            hideStimulus(firstStimulus);
-            showSecondChoice();
+        // Show single stimulus
+        const stimulus = showStimulus(stimulusPath, position);
+        
+        let responseMade = false;
+        let correct = false;
+        
+        // Correct response: click on the stimulus
+        const handleStimulusClick = (event) => {
+            event.stopPropagation(); // Prevent background click
+            if (!responseMade) {
+                responseMade = true;
+                correct = true;
+                hideStimulus(stimulus);
+                resolve({ correct: true, position: position });
+            }
         };
         
-        firstStimulus.addEventListener('click', handleFirstClick);
-        
-        // Show second choice after first is clicked or timeout
-        const showSecondChoice = () => {
-            // Remove first choice click handler
-            firstStimulus.removeEventListener('click', handleFirstClick);
-            
-            // Show second choice
-            const secondStimulus = showStimulus(choice2Path, 'center');
-            
-            // Add click handler for second choice
-            const handleSecondClick = () => {
-                selectedChoice = choice2Path;
-                hideStimulus(secondStimulus);
-                resolve(selectedChoice);
-            };
-            
-            secondStimulus.addEventListener('click', handleSecondClick);
-            
-            // Timeout for second choice
-            setTimeout(() => {
-                if (!selectedChoice) {
-                    hideStimulus(secondStimulus);
-                    resolve(null); // No choice made
-                }
-            }, params.ChoiceTimeOut || 10000);
+        // Incorrect response: click anywhere else on screen
+        const handleBackgroundClick = () => {
+            if (!responseMade) {
+                responseMade = true;
+                correct = false;
+                hideStimulus(stimulus);
+                resolve({ correct: false, position: position });
+            }
         };
         
-        // Timeout for first choice
+        // Add click handlers
+        stimulus.addEventListener('click', handleStimulusClick);
+        document.getElementById('experiment-container').addEventListener('click', handleBackgroundClick);
+        
+        // Timeout (also incorrect)
         setTimeout(() => {
-            if (!selectedChoice) {
-                hideStimulus(firstStimulus);
-                showSecondChoice();
+            if (!responseMade) {
+                responseMade = true;
+                hideStimulus(stimulus);
+                document.getElementById('experiment-container').removeEventListener('click', handleBackgroundClick);
+                resolve({ correct: false, position: position, timeout: true });
             }
         }, params.ChoiceTimeOut || 10000);
     });
 }
-
 // ========================================
 // 5. POSITION RANDOMIZATION
 // ========================================
@@ -206,47 +204,42 @@ function randomizePositions() {
 async function runTrial() {
     console.log(`Starting trial ${currentTrial + 1}`);
     
-    // Get random stimuli (you'll need to implement stimulus selection)
-    const sureOption = 'imagebags/sure_options/Sure2.png';
-    const gambleOption = 'imagebags/gamble_options/Gamble7v1pw10.png';
+    // Select a single stimulus (sure option for reward feedback)
+    const stimulus = 'imagebags/sure_options/sure_2_tokens.png';
     
-    // Randomize which appears first
-    const showSureFirst = Math.random() > 0.5;
-    const firstChoice = showSureFirst ? sureOption : gambleOption;
-    const secondChoice = showSureFirst ? gambleOption : sureOption;
+    // Present single stimulus
+    const response = await presentSingleStimulus(stimulus);
     
-    // Present choices sequentially
-    const selectedChoice = await presentChoicesSequential(firstChoice, secondChoice);
-    
-    // Process the choice
-    if (selectedChoice) {
-        console.log('Choice made:', selectedChoice);
+    // Process response
+    if (response.correct) {
+        console.log('Correct response!');
         
-        // Play reward feedback if sure option chosen
-        const rewardCount = rewardSystem.determineRewardCount(selectedChoice);
+        // Play reward feedback for correct responses
+        const rewardCount = rewardSystem.determineRewardCount(stimulus);
         if (rewardCount > 0) {
             await rewardSystem.playRewardFeedback(rewardCount);
         }
-        
-        // Save trial data
-        experimentData.push({
-            trial: currentTrial + 1,
-            sureOption: sureOption,
-            gambleOption: gambleOption,
-            choice: selectedChoice,
-            rewardCount: rewardCount,
-            timestamp: new Date().toISOString()
-        });
     } else {
-        console.log('No choice made (timeout)');
+        console.log('Incorrect response or timeout');
+        // No reward feedback for incorrect responses
     }
     
-    // Inter-trial interval
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Save trial data
+    experimentData.push({
+        trial: currentTrial + 1,
+        stimulus: stimulus,
+        position: response.position,
+        correct: response.correct,
+        timeout: response.timeout || false,
+        rewardCount: response.correct ? rewardSystem.determineRewardCount(stimulus) : 0,
+        timestamp: new Date().toISOString()
+    });
+    
+    // Inter-trial interval (1 second blank screen)
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     currentTrial++;
     
-    // Continue or end experiment
     if (currentTrial < totalTrials) {
         runTrial();
     } else {

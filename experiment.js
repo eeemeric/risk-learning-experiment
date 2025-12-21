@@ -35,7 +35,7 @@ async function loadParameters() {
 
 class RewardFeedback {
     constructor() {
-        this.rewardSound = new Audio('sounds/au0.wav');
+        this.rewardSound = new Audio('mkturkfolders/sounds/au0.wav');
         this.rewardSound.preload = 'auto';
     }
     

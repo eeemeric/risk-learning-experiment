@@ -2,15 +2,14 @@
 // RISK LEARNING EXPERIMENT - MAIN SCRIPT
 // ========================================
 
-console.log("EXPERIMENT.JS LOADED - VERSION 6 - " + new Date());
+console.log("EXPERIMENT.JS LOADED - VERSION 8 - " + new Date());
 
 // Global variables
 let currentTrial = 0;
 let totalTrials = 100;
 let experimentData = [];
 let params = {};
-let loadedImages = {};  // Store preloaded images
-let rewardSound = null; // Store loaded audio
+let loadedImages = {};
 
 // ========================================
 // 1. LOAD ASSETS FROM DROPBOX
@@ -20,20 +19,41 @@ async function loadAssetsFromDropbox() {
     console.log("Loading assets from Dropbox...");
     
     try {
-        // Load images using MKTurk's existing function
-        // Path must start with / for Dropbox
+        // Load image using MKTurk's existing function
         const sureImagePath = "/mkturkfolders/imagebags/sure_options/Sure2.png";
         loadedImages.sure = await loadImagefromDropbox(sureImagePath);
         console.log("Loaded sure image:", loadedImages.sure);
         
-        // Load audio using MKTurk's existing function
-        // SOUND_FILEPREFIX is "/mkturkfolders/sounds/au"
-        // So "0" will load "/mkturkfolders/sounds/au0.wav"
-        await loadSoundfromDropbox2("0", 0);
+        // Load audio directly
+        await loadRewardSound();
         console.log("Loaded reward sound");
         
     } catch (error) {
         console.error("Error loading assets:", error);
+    }
+}
+
+// Custom audio loading function
+async function loadRewardSound() {
+    try {
+        const soundPath = "/mkturkfolders/sounds/au0.wav";
+        
+        const response = await dbx.filesDownload({ path: soundPath });
+        console.log("Dropbox audio response:", response);
+        
+        // Get the blob from the response
+        const blob = response.result.fileBlob;
+        
+        // Convert blob to array buffer and decode
+        const arrayBuffer = await blob.arrayBuffer();
+        const audioBuffer = await audiocontext.decodeAudioData(arrayBuffer);
+        
+        // Store in sounds object
+        sounds.buffer[0] = audioBuffer;
+        console.log("Audio loaded successfully");
+        
+    } catch (error) {
+        console.error("Error loading audio:", error);
     }
 }
 
@@ -46,17 +66,15 @@ async function playRewardFeedback(nRewards) {
     
     for (let i = 0; i < nRewards; i++) {
         try {
-            // Use MKTurk's sound system
             if (sounds && sounds.buffer && sounds.buffer[0]) {
                 var source = audiocontext.createBufferSource();
                 source.buffer = sounds.buffer[0];
                 source.connect(audiocontext.destination);
                 source.start(0);
+                
+                // Wait for sound to finish + small gap
+                await new Promise(resolve => setTimeout(resolve, 300));
             }
-            
-            // Wait 300ms between sounds
-            await new Promise(resolve => setTimeout(resolve, 300));
-            
         } catch (error) {
             console.error('Error playing sound:', error);
         }
@@ -74,7 +92,6 @@ function determineRewardCount(chosenStimulus) {
         'Sure7.png': 7
     };
     
-    // Extract filename from path
     const filename = chosenStimulus.split('/').pop();
     return sureValues[filename] || 1;
 }
@@ -180,7 +197,7 @@ async function runTrial() {
     console.log(`Starting trial ${currentTrial + 1}`);
     
     // Use preloaded image
-    const sureImagePath = "/mkturkfolders/imagebags/sure_options/Sure2.png";
+    const imagePath = "/mkturkfolders/imagebags/sure_options/Sure2.png";
     
     // Present single stimulus
     const response = await presentSingleStimulus(loadedImages.sure, imagePath);
@@ -228,7 +245,7 @@ async function startExperiment() {
     
     // Initialize audio context (requires user interaction)
     initializeAudio();
-
+    
     // Load assets from Dropbox
     await loadAssetsFromDropbox();
     

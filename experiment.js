@@ -297,6 +297,12 @@ async function startExperiment() {
 function endExperiment() {
     console.log('Experiment complete!');
     console.log('Data:', experimentData);
+
+    // Save final data to Dropbox
+    await saveDataToDropbox();
+
+    // REMOVE black background class
+    document.body.classList.remove('experiment-running');
     
     document.getElementById('experiment-container').style.display = 'none';
     document.getElementById('completion').style.display = 'block';

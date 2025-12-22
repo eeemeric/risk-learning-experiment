@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Risk Learning Experiment</title>
     
+    <!-- Suppress favicon error -->
+    <link rel="icon" href="data:,">
+    
     <!-- Add Dropbox SDK -->
     <script src="https://cdn.jsdelivr.net/npm/dropbox@10.34.0/dist/Dropbox-sdk.min.js"></script>
     
@@ -14,6 +17,7 @@
             height: 600px;
             position: relative;
             cursor: pointer;
+            background-color: black;
         }
         
         .stimulus {
@@ -32,6 +36,13 @@
             background-color: #f0f0f0;
         }
         
+        /* Full black screen during experiment */
+        body.experiment-running {
+            background-color: black;
+            padding: 0;
+            margin: 0;
+        }
+        
         #instructions, #experiment-container, #completion {
             max-width: 800px;
             margin: 0 auto;
@@ -39,6 +50,18 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* Make experiment container full screen with black background */
+        body.experiment-running #experiment-container {
+            max-width: 100%;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            border-radius: 0;
+            box-shadow: none;
+            background-color: black;
         }
         
         #completion {
@@ -139,6 +162,6 @@
     </script>
     
     <!-- Load your experiment script LAST -->
-    <script src="experiment.js?v=7"></script>
+    <script src="experiment.js?v=10"></script>
 </body>
 </html>

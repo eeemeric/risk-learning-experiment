@@ -341,14 +341,15 @@ async function startExperiment() {
     runTrial();
 }
 
-function endExperiment() {
+async function endExperiment() {
     console.log('Experiment complete!');
     console.log('Data:', experimentData);
-
+    
     // Save final data to Dropbox
+    console.log("Saving final data...");
     await saveDataToDropbox();
-
-    // REMOVE black background class
+    
+    // Remove black background class
     document.body.classList.remove('experiment-running');
     
     document.getElementById('experiment-container').style.display = 'none';

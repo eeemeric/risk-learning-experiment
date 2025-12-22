@@ -253,4 +253,3 @@ window.addEventListener('load', function() {
     console.log('Page loaded, experiment ready');
     document.getElementById('start-button').addEventListener('click', startExperiment);
 });
-});

@@ -2,7 +2,7 @@
 // RISK LEARNING EXPERIMENT - MAIN SCRIPT
 // ========================================
 
-console.log("EXPERIMENT.JS LOADED - VERSION 8 - " + new Date());
+console.log("EXPERIMENT.JS LOADED - VERSION 9 - " + new Date());
 
 // Global variables
 let currentTrial = 0;
@@ -15,21 +15,37 @@ let loadedImages = {};
 // 1. LOAD ASSETS FROM DROPBOX
 // ========================================
 
-async function loadAssetsFromDropbox() {
-    console.log("Loading assets from Dropbox...");
-    
+// Custom image loading function
+async function loadImageFromDropboxCustom(imagePath) {
     try {
-        // Load image using MKTurk's existing function
-        const sureImagePath = "/mkturkfolders/imagebags/sure_options/Sure2.png";
-        loadedImages.sure = await loadImagefromDropbox(sureImagePath);
-        console.log("Loaded sure image:", loadedImages.sure);
+        console.log("Loading image from:", imagePath);
         
-        // Load audio directly
-        await loadRewardSound();
-        console.log("Loaded reward sound");
+        const response = await dbx.filesDownload({ path: imagePath });
+        console.log("Dropbox image response:", response);
+        
+        // Get the blob from the response
+        const blob = response.result.fileBlob;
+        
+        // Create object URL from blob
+        const imageUrl = window.URL.createObjectURL(blob);
+        
+        // Create and return image element
+        return new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = function() {
+                console.log("Image loaded successfully:", imagePath);
+                resolve(image);
+            };
+            image.onerror = function() {
+                console.error("Image failed to load:", imagePath);
+                reject(new Error("Image load failed"));
+            };
+            image.src = imageUrl;
+        });
         
     } catch (error) {
-        console.error("Error loading assets:", error);
+        console.error("Error loading image:", error);
+        throw error;
     }
 }
 
@@ -54,6 +70,24 @@ async function loadRewardSound() {
         
     } catch (error) {
         console.error("Error loading audio:", error);
+    }
+}
+
+async function loadAssetsFromDropbox() {
+    console.log("Loading assets from Dropbox...");
+    
+    try {
+        // Load image using custom function
+        const sureImagePath = "/mkturkfolders/imagebags/sure_options/Sure2.png";
+        loadedImages.sure = await loadImageFromDropboxCustom(sureImagePath);
+        console.log("Loaded sure image:", loadedImages.sure);
+        
+        // Load audio
+        await loadRewardSound();
+        console.log("Loaded reward sound");
+        
+    } catch (error) {
+        console.error("Error loading assets:", error);
     }
 }
 

@@ -286,6 +286,9 @@ async function startExperiment() {
     // Hide instructions, show experiment
     document.getElementById('instructions').style.display = 'none';
     document.getElementById('experiment-container').style.display = 'block';
+
+    // Add black background class to body  <-- THIS LINE
+    document.body.classList.add('experiment-running');
     
     // Start first trial
     runTrial();

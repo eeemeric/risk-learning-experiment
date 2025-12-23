@@ -2,7 +2,7 @@
 // RISK LEARNING EXPERIMENT - MAIN SCRIPT
 // ========================================
 
-console.log("EXPERIMENT.JS LOADED - VERSION 21 - " + new Date());
+console.log("EXPERIMENT.JS LOADED - VERSION 24 - " + new Date());
 
 // Global variables
 let currentTrial = 0;
@@ -455,10 +455,13 @@ async function runTrial() {
         // Determine reward based on stimulus type
         rewardResult = determineRewardCount(stimulusData.path, stimulusData.type);
         
-        // Show outcome (clear 100ms, then show corresponding sure stimulus)
+        // Show outcome
         await showOutcome(rewardResult.rewardCount, response.position);
         
-        // Play reward feedback
+        // Deliver liquid reward via pump (if BLE connected)
+        await deliverReward(rewardResult.rewardCount);
+        
+        // Play reward feedback (sound)
         await playRewardFeedback(rewardResult.rewardCount);
     } else {
         console.log('Incorrect response or timeout');

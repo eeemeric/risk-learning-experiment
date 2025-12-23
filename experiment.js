@@ -229,20 +229,75 @@ async function playRewardFeedback(nRewards) {
     }
 }
 
-function determineRewardCount(imagePath) {
-    const sureValues = {
-        'sure1.png': 1,
-        'sure2.png': 2,
-        'sure3.png': 3,
-        'sure4.png': 4,
-        'sure5.png': 5,
-        'sure6.png': 6,
-        'sure7.png': 7
-    };
-    
+function determineRewardCount(imagePath, stimulusType) {
     // Extract filename from path (lowercase for matching)
     const filename = imagePath.split('/').pop().toLowerCase();
-    return sureValues[filename] || 1;
+    
+    if (stimulusType === 'sure') {
+        // Sure options: Sure1.png, Sure2.png, etc.
+        // Extract number from filename
+        const sureValues = {
+            'sure1.png': 1,
+            'sure2.png': 2,
+            'sure3.png': 3,
+            'sure4.png': 4,
+            'sure5.png': 5,
+            'sure6.png': 6,
+            'sure7.png': 7
+        };
+        return {
+            rewardCount: sureValues[filename] || 1,
+            outcome: 'sure',
+            winAmount: null,
+            loseAmount: null,
+            probability: null
+        };
+        
+    } else if (stimulusType === 'gamble') {
+        // Gamble options: Gamble7v1pw75.png
+        // Format: Gamble[WIN]v[LOSE]pw[PROBABILITY].png
+        // Example: Gamble7v1pw75.png = win 7, lose 1, 75% chance of win
+        
+        const gambleMatch = filename.match(/gamble(\d+)v(\d+)pw(\d+)\.png/);
+        
+        if (gambleMatch) {
+            const winAmount = parseInt(gambleMatch[1]);
+            const loseAmount = parseInt(gambleMatch[2]);
+            const winProbability = parseInt(gambleMatch[3]) / 100;
+            
+            // Randomly determine outcome based on probability
+            const randomValue = Math.random();
+            const isWin = randomValue < winProbability;
+            const rewardCount = isWin ? winAmount : loseAmount;
+            
+            console.log(`Gamble: ${winAmount} vs ${loseAmount}, P(win)=${winProbability}, Random=${randomValue.toFixed(3)}, Result=${isWin ? 'WIN' : 'LOSE'}, Reward=${rewardCount}`);
+            
+            return {
+                rewardCount: rewardCount,
+                outcome: isWin ? 'win' : 'lose',
+                winAmount: winAmount,
+                loseAmount: loseAmount,
+                probability: winProbability
+            };
+        } else {
+            console.warn("Could not parse gamble filename:", filename);
+            return {
+                rewardCount: 1,
+                outcome: 'unknown',
+                winAmount: null,
+                loseAmount: null,
+                probability: null
+            };
+        }
+    }
+    
+    return {
+        rewardCount: 1,
+        outcome: 'unknown',
+        winAmount: null,
+        loseAmount: null,
+        probability: null
+    };
 }
 
 // ========================================
@@ -361,13 +416,18 @@ async function runTrial() {
         stimulusData.type
     );
     
+    // Determine reward (handles both sure and gamble options)
+    let rewardResult = { rewardCount: 0, outcome: 'none' };
+    
     // Process response
     if (response.correct) {
         console.log('Correct response!');
         
+        // Determine reward based on stimulus type
+        rewardResult = determineRewardCount(stimulusData.path, stimulusData.type);
+        
         // Play reward feedback
-        const rewardCount = determineRewardCount(stimulusData.path);
-        await playRewardFeedback(rewardCount);
+        await playRewardFeedback(rewardResult.rewardCount);
     } else {
         console.log('Incorrect response or timeout');
     }
@@ -382,7 +442,11 @@ async function runTrial() {
         position: response.position,
         correct: response.correct,
         timeout: response.timeout || false,
-        rewardCount: response.correct ? determineRewardCount(stimulusData.path) : 0,
+        rewardCount: rewardResult.rewardCount,
+        gambleOutcome: rewardResult.outcome,
+        gambleWinAmount: rewardResult.winAmount,
+        gambleLoseAmount: rewardResult.loseAmount,
+        gambleProbability: rewardResult.probability,
         timestamp: new Date().toISOString()
     });
     

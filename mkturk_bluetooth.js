@@ -101,72 +101,75 @@ async function findBLEDevice(event){
 }
 
 // Step 1: Manually select device -- returns a promise
+// Step 1: Manually select device -- returns a promise
 async function requestBLEDevice(){
-  console.log('=== requestBLEDevice() called ===');
-  console.log('=== requestBLEDevice() STARTED ===');
-  // Check if Web Bluetooth is available
-  if (!navigator.bluetooth) {
-    console.log('Web Bluetooth API not supported in this browser');
-    return;
-  }
-  
-  // Check if Web Bluetooth is available
-  if (!navigator.bluetooth) {
-    console.log('Web Bluetooth API not supported in this browser');
-    return;
-  }
-  
-  console.log('Web Bluetooth API is available');
-
-  let result = Promise.resolve()
-  if (ble.connected == false){
-    console.log('Requesting ble device...')
-    console.log('Requesting bluetooth device list')  // Replace writeTextonBlankCanvas with this
+    let result = Promise.resolve();
     
-    // Temporary (shows all devices):
-    // let options = {acceptAllDevices: true, optionalServices: [ble.customserviceUUID]}
-    // Temporary test - connect to any service
-    let options = {
-        filters: [{namePrefix: "BLENano_"}], 
-        optionalServices: ['generic_access', 'generic_attribute']  // Standard services
+    if (ble.connected == false){
+        console.log('Requesting ble device...');
+        
+        // Get selected device name from dropdown (if exists)
+        let selectedDevice = document.getElementById('ble-device-select');
+        let deviceName = selectedDevice ? selectedDevice.value : 'BLENano_';
+        
+        let options;
+        
+        if (deviceName === 'other') {
+            // Scan for all BLE devices
+            options = {
+                acceptAllDevices: true,
+                optionalServices: [ble.customserviceUUID]
+            };
+        } else {
+            // Filter by device name prefix
+            options = {
+                filters: [{namePrefix: deviceName}],
+                optionalServices: [ble.customserviceUUID]
+            };
+        }
+        
+        console.log('Requesting device with options:', options);
+        
+        try {
+            device = await navigator.bluetooth.requestDevice(options);
+            console.log("Found a device:", device);
+            console.log("Device name:", device.name);
+            
+            var textstr = "Found device: " + device.name + "<br>ID: " + device.id;
+            ble.statustext = textstr;
+            updateBLEStatus(textstr);
+            
+            ble.device = device;
+            ble.device.addEventListener('gattserverdisconnected', onDisconnectedBLE);
+            
+        } catch(error) {
+            console.log('Bluetooth error:', error);
+            console.log('Error name:', error.name);
+            console.log('Error message:', error.message);
+            
+            if (ble.connected == false){
+                var textstr = 'Waiting for user to select device';
+                console.log(textstr);
+                ble.statustext = textstr;
+                updateBLEStatus(textstr);
+                return error;
+            }
+        }
     }
-    console.log('About to call requestDevice with options:', options);
-    try{
-        console.log('Calling navigator.bluetooth.requestDevice...');
-        device = await navigator.bluetooth.requestDevice(options)
-        console.log("found a device",device)
-        console.log(device.name)
-        console.log(device.uuids)
-        console.log('Attempting to connect to GATT server...');
-        const server = await device.gatt.connect();
-        console.log('Connected! Getting services...');
-        const services = await server.getPrimaryServices();
-        console.log('Available services:', services);
-        services.forEach(service => {
-        console.log('Service UUID:', service.uuid);
-        });
-        var textstr = "found a device name: " + device.name + "<br>" + "id: " + device.id
-        ble.statustext = textstr
-        updateStatusText()
-        ble.device=device
-        ble.device.addEventListener('gattserverdisconnected',onDisconnectedBLE)
+    return result;
+}
+
+// Helper function to update BLE status on page
+function updateBLEStatus(message) {
+    let statusElement = document.getElementById('ble-status');
+    if (statusElement) {
+        statusElement.innerHTML = message;
+        statusElement.style.color = ble.connected ? 'green' : 'orange';
     }
-    catch(error){
-      // Add detailed error logging
-      console.log('Detailed Bluetooth error:', error);
-      console.log('Error name:', error.name);
-      console.log('Error message:', error.message);
-      
-      if (ble.connected == false){
-        var textstr = 'Still waiting for user to select device'
-        console.log(textstr)
-        ble.statustext = ble.statustext + "<br>" + textstr
-        updateStatusText()
-        return error
-      }
+    // Also try the original function if it exists
+    if (typeof updateStatusText === 'function') {
+        updateStatusText();
     }
-  }
-  return result
 }
 
 // Step 2: Connect server & Cache characteristics -- returns a promise

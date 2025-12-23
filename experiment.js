@@ -550,7 +550,32 @@ async function endExperiment() {
 }
 
 // ========================================
-// 9. PAGE LOAD INITIALIZATION
+// 9. BLUETOOTH CONNECTION
+// ========================================
+
+async function connectBluetooth() {
+    console.log('Connect Bluetooth button clicked');
+    
+    try {
+        await requestBLEDevice();
+        await connectBLEDeviceAndCacheCharacteristics();
+        
+        document.getElementById('ble-status').innerHTML = 'Connected!';
+        document.getElementById('ble-status').style.color = 'green';
+        console.log('BLE connected successfully');
+        
+    } catch (error) {
+        console.error('BLE connection error:', error);
+        document.getElementById('ble-status').innerHTML = 'Connection failed';
+        document.getElementById('ble-status').style.color = 'red';
+    }
+}
+
+// Add event listener for BLE button
+document.getElementById('connect-ble-button').addEventListener('click', connectBluetooth);
+
+// ========================================
+// 10. PAGE LOAD INITIALIZATION
 // ========================================
 
 window.addEventListener('load', function() {

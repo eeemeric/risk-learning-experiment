@@ -144,7 +144,7 @@ async function requestBLEDevice(){
         console.log('Available services:', services);
         services.forEach(service => {
         console.log('Service UUID:', service.uuid);
-        })
+        });
         var textstr = "found a device name: " + device.name + "<br>" + "id: " + device.id
         ble.statustext = textstr
         updateStatusText()

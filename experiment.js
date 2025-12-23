@@ -11,6 +11,8 @@ let experimentData = [];
 let params = {};
 let loadedImages = [];  // Array of {image: Image, path: string, type: 'sure'|'gamble'}
 let trialOrder = [];    // Randomized order of stimulus indices
+let currentBlock = 1;      // ADD THIS
+let trialWithinBlock = 0;  // ADD THIS
 
 // ========================================
 // 1. LOAD ASSETS FROM DROPBOX
@@ -343,11 +345,14 @@ async function presentSingleStimulus(image, imagePath, stimulusType) {
 // 6. TRIAL MANAGEMENT
 // ========================================
 
+let currentBlock = 1;  // Track which block we're on
+let trialWithinBlock = 0;  // Track trial within current block
+
 async function runTrial() {
-    console.log(`Starting trial ${currentTrial + 1} of ${totalTrials}`);
+    console.log(`Starting trial ${currentTrial + 1} (Block ${currentBlock}, Trial ${trialWithinBlock + 1} of ${totalTrials})`);
     
     // Get the stimulus for this trial (randomized order)
-    const stimulusIndex = trialOrder[currentTrial];
+    const stimulusIndex = trialOrder[trialWithinBlock];
     const stimulusData = loadedImages[stimulusIndex];
     
     console.log(`Presenting: ${stimulusData.path} (${stimulusData.type})`);
@@ -373,6 +378,8 @@ async function runTrial() {
     // Save trial data
     experimentData.push({
         trial: currentTrial + 1,
+        block: currentBlock,
+        trialWithinBlock: trialWithinBlock + 1,
         stimulus: stimulusData.path,
         stimulusType: stimulusData.type,
         position: response.position,
@@ -392,12 +399,19 @@ async function runTrial() {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     currentTrial++;
+    trialWithinBlock++;
     
-    if (currentTrial < totalTrials) {
-        runTrial();
-    } else {
-        endExperiment();
+    // Check if we've completed all stimuli in this block
+    if (trialWithinBlock >= totalTrials) {
+        // Reshuffle for next block
+        console.log(`Block ${currentBlock} complete. Reshuffling for block ${currentBlock + 1}...`);
+        trialOrder = shuffleArray([...Array(loadedImages.length).keys()]);
+        trialWithinBlock = 0;
+        currentBlock++;
     }
+    
+    // Continue running trials indefinitely
+    runTrial();
 }
 
 // ========================================

@@ -429,9 +429,6 @@ async function showOutcome(rewardCount, position) {
 // 7. TRIAL MANAGEMENT
 // ========================================
 
-let currentBlock = 1;
-let trialWithinBlock = 0;
-
 async function runTrial() {
     console.log(`Starting trial ${currentTrial + 1} (Block ${currentBlock}, Trial ${trialWithinBlock + 1} of ${totalTrials})`);
     

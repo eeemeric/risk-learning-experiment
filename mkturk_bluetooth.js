@@ -215,62 +215,52 @@ async function connectBLEDeviceAndCacheCharacteristics(){
         throw new Error('No BLE device selected');
     }
     
-    console.log('Connecting to GATT Server...');
+    console.log('Step 1: Connecting to GATT Server...');
     
     try {
         server = await ble.device.gatt.connect();
-        console.log("Connected to GATT server");
+        console.log("Step 2: Connected to GATT server");
         ble.server = server;
         
         // Discover all services first
-        console.log("Discovering services...");
+        console.log("Step 3: Discovering all services...");
         const services = await server.getPrimaryServices();
         console.log("Found " + services.length + " services:");
         for (const svc of services) {
-            console.log("  Service: " + svc.uuid);
+            console.log("  - " + svc.uuid);
         }
         
         // Try to get our custom service
-        console.log("Looking for service: " + ble.customserviceUUID);
-        
-        try {
-            service = await server.getPrimaryService(ble.customserviceUUID);
-            console.log("Found custom service!");
-            ble.service = service;
-        } catch (e) {
-            console.error("Could not find service: " + e.message);
-            throw e;
-        }
+        console.log("Step 4: Looking for service: " + ble.customserviceUUID);
+        service = await server.getPrimaryService(ble.customserviceUUID);
+        console.log("Step 5: Found custom service!");
+        ble.service = service;
         
         // Discover characteristics
-        console.log("Discovering characteristics...");
+        console.log("Step 6: Discovering characteristics...");
         const chars = await service.getCharacteristics();
         console.log("Found " + chars.length + " characteristics:");
         for (const char of chars) {
-            console.log("  Char: " + char.uuid);
+            console.log("  - " + char.uuid);
         }
         
         // Get pump characteristic
-        console.log("Looking for pump characteristic: " + ble.pumpdurationUUID);
+        console.log("Step 7: Looking for pump characteristic: " + ble.pumpdurationUUID);
+        ble.writepumpdurationcharacteristic = await service.getCharacteristic(ble.pumpdurationUUID);
+        ble.pumpWriteCharacteristic = ble.writepumpdurationcharacteristic;
+        console.log("Step 8: Found pump characteristic!");
         
-        try {
-            ble.writepumpdurationcharacteristic = await service.getCharacteristic(ble.pumpdurationUUID);
-            ble.pumpWriteCharacteristic = ble.writepumpdurationcharacteristic;
-            console.log("Found pump characteristic!");
-        } catch (e) {
-            console.error("Could not find pump characteristic: " + e.message);
-            throw e;
-        }
-        
-        // If we got here, we're connected!
         ble.connected = true;
         updateBLEStatus('Connected!');
-        console.log("BLE fully connected!");
+        console.log("Step 9: BLE fully connected!");
         
     } catch (error) {
-        console.error('Connection error: ' + error.message);
+        console.error('Connection failed at some step');
+        console.error('Error:', error);
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
         ble.connected = false;
-        updateBLEStatus('Failed: ' + error.message);
+        updateBLEStatus('Failed: ' + (error.message || 'Unknown'));
         throw error;
     }
 }

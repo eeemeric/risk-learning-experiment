@@ -367,21 +367,30 @@ async function writepumpdurationtoBLE(num) {
         return false;
     }
     
-    if (!ble.writepumpdurationcharacteristic) {
-        console.error('Pump duration characteristic (0xA002) not found');
+    var characteristic = ble.writepumpdurationcharacteristic || ble.pumpWriteCharacteristic;
+    
+    if (!characteristic) {
+        console.error('Pump characteristic not found');
         return false;
     }
     
     var arrInt8 = toBytesInt16(num);
-    console.log("Sending to 0xA002: [" + arrInt8[0] + ", " + arrInt8[1] + "]");
+    console.log("Sending bytes: [" + arrInt8[0] + ", " + arrInt8[1] + "]");
     
     try {
-        await ble.writepumpdurationcharacteristic.writeValue(arrInt8);
+        await characteristic.writeValueWithoutResponse(arrInt8);
         console.log('Pump triggered with duration: ' + num);
         return true;
     } catch(error) {
-        console.error('Error: ' + error.message);
-        return false;
+        console.log('writeValueWithoutResponse failed, trying writeValue...');
+        try {
+            await characteristic.writeValue(arrInt8);
+            console.log('Pump triggered with duration: ' + num);
+            return true;
+        } catch(error2) {
+            console.error('Both write methods failed: ' + error2.message);
+            return false;
+        }
     }
 }
 

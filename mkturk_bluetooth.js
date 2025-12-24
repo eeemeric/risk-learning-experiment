@@ -14,7 +14,7 @@
 //---ble status write
 //---detect multiple ble devices
 //---ble opt out
-
+console.log("mkturk_bluetooth.js loaded!");
 //================ INITIALIZE BLE VARIABLE ================//
 var ble = {
     name: "BLENano_Dev",

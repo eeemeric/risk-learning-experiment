@@ -14,7 +14,7 @@
 //---ble status write
 //---detect multiple ble devices
 //---ble opt out
-console.log("mkturk_bluetooth.js loaded!");
+console.log("mkturk_bluetooth.js LOADED - requestBLEDevice exists: " + (typeof requestBLEDevice));
 //================ INITIALIZE BLE VARIABLE ================//
 var ble = {
     name: "BLENano_Dev",
@@ -444,4 +444,5 @@ function onRFIDNotificationFromBLE(event){
     ble.statustext = textstr
     updateHeadsUpDisplay()
 }
+console.log("mkturk_bluetooth.js FINISHED - requestBLEDevice exists: " + (typeof requestBLEDevice));
 //============== READ NOTIFICATIONS & WRITES (end) ==============//

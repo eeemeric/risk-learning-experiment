@@ -125,7 +125,7 @@ Gamble6v0pw25.png  → Win: 6, Lose: 0, P(win): 25%
 - Go to repository Settings → Pages
 - Source: Deploy from branch
 - Branch: main, / (root)
-Access Experiment:
+- Access Experiment
   https://[your-github-username].github.io/risk-learning-experiment/index.html
 
 ### 3. Subject Parameter File Setup
@@ -142,27 +142,31 @@ Example content:
     "PunishTimeOut": 3000,
     "InterTrialInterval": 1000
 }
+```
 
-4. Adding New Subjects
+### 4. Adding New Subjects
 Create parameter file: /mkturkfolders/parameterfiles/subjects/NewSubject_params.txt
 Create data folder: /mkturkfolders/datafiles/NewSubject/
 Add to dropdown in index.html: <option value="NewSubject">NewSubject</option>
-🔵 BLE Pump Controller Setup
+
+### 🔵 BLE Pump Controller Setup
 Hardware Requirements
-Adafruit Feather 32u4 Bluefruit LE (or compatible BLE board)
-Liquid pump/solenoid
-Power supply for pump
-Arduino Setup
-Install Arduino IDE
+- Adafruit Feather 32u4 Bluefruit LE (or compatible BLE board)
+- Liquid pump/solenoid
+- Power supply for pump
+- Arduino Setup
 
-Add Adafruit Board Package:
+#### Install Arduino IDE
 
-File → Preferences → Additional Board Manager URLs: https://adafruit.github.io/arduino-board-index/package_adafruit_index.json
-Install Libraries:
+- Add Adafruit Board Package:
 
-Sketch → Include Library → Manage Libraries
-Search and install: "Adafruit BluefruitLE nRF51"
-Upload Sketch:
+-- File → Preferences → Additional Board Manager URLs: https://adafruit.github.io/arduino-board-index/package_adafruit_index.json
+
+#### Install Libraries:
+
+- Sketch → Include Library → Manage Libraries
+- Search and install: "Adafruit BluefruitLE nRF51"
+- Upload Sketch:
 
 See arduino/mkturk_pump_feather.ino (save the working sketch)
 Select Board: Arduino Uno (or appropriate board)
@@ -174,49 +178,50 @@ Adding New BLE Devices
 Add to dropdown in index.html: <option value="NewDevice">NewDevice</option>
 Device name must start with "BLENano_" prefix (or update filter in mkturk_bluetooth.js)
 
-🚀 Running an Experiment
-Open the experiment URL in Chrome browser
-Authorize Dropbox (first time or after token expires)
-Select Experiment Type from dropdown
-Select Subject from dropdown
-Connect Bluetooth (if using pump):
-Click "Connect Bluetooth"
-Select your BLE device from popup
-Wait for "Connected!" status
-Test Pump (optional): Click "Test Pump" to verify connection
-Start Experiment: Click "Start Experiment" - screen turns black, stimuli appear
-Data Saving:
-Auto-saves every 10 trials
-Final save on experiment end
-Files saved to: /mkturkfolders/datafiles/[Subject]/
-🔧 Troubleshooting
+### 🚀 Running an Experiment
+- Open the experiment URL in Chrome browser
+- Authorize Dropbox (first time or after token expires)
+- Select Experiment Type from dropdown
+- Select Subject from dropdown
+- Connect Bluetooth (if using pump):
+- Click "Connect Bluetooth"
+- Select your BLE device from popup
+- Wait for "Connected!" status
+- Test Pump (optional): Click "Test Pump" to verify connection
+- Start Experiment: Click "Start Experiment" - screen turns black, stimuli appear
+- Data Saving:
+- Auto-saves every 10 trials
+- Final save on experiment end
+- Files saved to: /mkturkfolders/datafiles/[Subject]/
+
+## 🔧 Troubleshooting
 Dropbox Token Expired
 Error: 401 Unauthorized
 Solution: Click "Clear Dropbox Token" button and refresh page, or use incognito mode.
 
-BLE Device Not Found
+### BLE Device Not Found
+#### Solutions:
+
+- Ensure device is powered on
+- Check device name matches dropdown selection
+- Try "Other (scan all)" option
+- Ensure Bluetooth is enabled on computer/tablet
+- Experiment Script Not Loading
+- Error: 404 Not Found
+- Solution: Verify the experiment .js file exists in repository and is committed.
+
+#### No Pump Response
 Solutions:
 
-Ensure device is powered on
-Check device name matches dropdown selection
-Try "Other (scan all)" option
-Ensure Bluetooth is enabled on computer/tablet
-Experiment Script Not Loading
-Error: 404 Not Found
-Solution: Verify the experiment .js file exists in repository and is committed.
-
-No Pump Response
-Solutions:
-
-Check Arduino Serial Monitor for connection messages
-Verify BLE shows "Connected!" in browser
-Test with "Test Pump" button
-Check pump wiring and power
-📊 Data Output Format
+- Check Arduino Serial Monitor for connection messages
+- Verify BLE shows "Connected!" in browser
+- Test with "Test Pump" button
+- Check pump wiring and power
+  
+## 📊 Data Output Format
 Data files are saved as JSON with the following structure:
 
-json
-Copy code
+```javascript 
 {
     "experimentInfo": {
         "experimentType": "detection",
@@ -240,17 +245,17 @@ Copy code
         }
     ]
 }
+```
 
-📝 Version History
-v40 - Added multiple experiment types, subject selection, dynamic script loading
-v38 - Added BLE pump control, Pavlovian CS-US ordering
-v34 - Basic detection task with Dropbox integration
+### 📝 Version History
+- v40 - Added multiple experiment types, subject selection, dynamic script loading
+- v38 - Added BLE pump control, Pavlovian CS-US ordering
+- v34 - Basic detection task with Dropbox integration
 
 🙏 Acknowledgments
+
 Built on the MKTurk framework by DiCarlo Lab.
 
-📄 License
-[Add your license here]
 
 
 

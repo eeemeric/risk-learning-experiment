@@ -67,6 +67,76 @@
             display: none;
         }
         
+        <!-- Experiment Scripts - Load dynamically based on selection -->
+        <script>
+            let experimentModule = null;
+            
+            async function loadExperimentScript(experimentType) {
+                // Remove previously loaded experiment script if any
+                const oldScript = document.getElementById('experiment-script');
+                if (oldScript) {
+                    oldScript.remove();
+                }
+                
+                // Determine which script to load
+                let scriptName = '';
+                switch(experimentType) {
+                    case 'detection':
+                        scriptName = 'experiment_detection.js';
+                        break;
+                    case 'choice':
+                        scriptName = 'experiment_choice.js';
+                        break;
+                    default:
+                        console.error('Unknown experiment type:', experimentType);
+                        return false;
+                }
+                
+                // Load the script
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.id = 'experiment-script';
+                    script.src = scriptName + '?v=39';
+                    script.onload = () => {
+                        console.log('Loaded experiment script:', scriptName);
+                        resolve(true);
+                    };
+                    script.onerror = () => {
+                        console.error('Failed to load:', scriptName);
+                        reject(false);
+                    };
+                    document.body.appendChild(script);
+                });
+            }
+        </script>
+
+        <script>
+            document.getElementById('start-button').addEventListener('click', async function() {
+                // Check experiment selection
+                const experimentSelect = document.getElementById('experiment-select');
+                const experimentType = experimentSelect.value;
+                
+                if (!experimentType) {
+                    alert('Please select an experiment type first!');
+                    return;
+                }
+                
+                // Load the appropriate experiment script
+                try {
+                    await loadExperimentScript(experimentType);
+                    // Now call startExperiment() which is defined in the loaded script
+                    if (typeof startExperiment === 'function') {
+                        startExperiment();
+                    } else {
+                        console.error('startExperiment function not found in loaded script');
+                    }
+                } catch (error) {
+                    console.error('Error loading experiment:', error);
+                    alert('Failed to load experiment. Check console.');
+                }
+            });
+        </script>
+                
         button {
             background-color: #4CAF50;
             color: white;
@@ -102,44 +172,54 @@
 </head>
 <body>
     <!-- Instructions Screen -->
-    <div id="instructions">
-        <h1>Risk Learning Experiment v38</h1>
-        <p>In this experiment, you will see different options appear on screen.</p>
-        <p>Click on the option you prefer when it appears.</p>
-        <p>You will hear reward sounds based on your choices.</p>
-        
-        <!-- Subject Selection -->
-        <div id="subject-section" style="margin: 20px 0; padding: 15px; background: #d0e0f0; border-radius: 5px;">
-            <label for="subject-select"><strong>Select Subject:</strong></label>
-            <select id="subject-select" style="margin: 10px; padding: 5px; font-size: 16px;">
-                <option value="">-- Select Subject --</option>
-                <option value="RiskLearningSubject">RiskLearningSubject</option>
-                <option value="NewSubject">NewSubject</option>
-                <!-- Add more subjects here -->
-            </select>
-            <span id="subject-status" style="margin-left: 10px; color: gray;"></span>
-        </div>
-        
-        <!-- BLE Device Selection -->
-        <div id="ble-section" style="margin: 20px 0; padding: 15px; background: #e0e0e0; border-radius: 5px;">
-            <label for="ble-device-select"><strong>Select BLE Device:</strong></label>
-            <select id="ble-device-select" style="margin: 10px; padding: 5px;">
-                <option value="BLENano_Dev">BLENano_Dev (Feather)</option>
-                <option value="BLENano_Bo" selected>BLENano_Bo</option>
-                <option value="BLENano_PumpRFID_Setta">BLENano_PumpRFID_Setta</option>
-                <option value="BLENano_">Any BLENano device</option>
-                <option value="other">Other (scan all)</option>
-            </select>
-            <br>
-            <button id="connect-ble-button">Connect Bluetooth</button>
-            <span id="ble-status" style="margin-left: 10px; color: gray;">Not connected</span>
-        </div>
-        
-        <!-- Action Buttons -->
-        <button id="test-pump-button" style="background-color: #0066ff;">Test Pump</button>
-        <button id="clear-storage-button" style="background-color: #ff6600;">Clear Dropbox Token</button>
-        <button id="start-button">Start Experiment</button>
+<div id="instructions">
+    <h1>Risk Learning Experiment v39</h1>
+    <p>In this experiment, you will see different options appear on screen.</p>
+    <p>Click on the option you prefer when it appears.</p>
+    <p>You will hear reward sounds based on your choices.</p>
+    
+    <!-- Experiment Selection -->
+    <div id="experiment-section" style="margin: 20px 0; padding: 15px; background: #f0d0f0; border-radius: 5px;">
+        <label for="experiment-select"><strong>Select Experiment:</strong></label>
+        <select id="experiment-select" style="margin: 10px; padding: 5px; font-size: 16px;">
+            <option value="">-- Select Experiment --</option>
+            <option value="detection">Detection Task (Single Stimulus)</option>
+            <option value="choice">Choice Task (Two Stimuli)</option>
+        </select>
+        <span id="experiment-status" style="margin-left: 10px; color: gray;"></span>
     </div>
+    
+    <!-- Subject Selection -->
+    <div id="subject-section" style="margin: 20px 0; padding: 15px; background: #d0e0f0; border-radius: 5px;">
+        <label for="subject-select"><strong>Select Subject:</strong></label>
+        <select id="subject-select" style="margin: 10px; padding: 5px; font-size: 16px;">
+            <option value="">-- Select Subject --</option>
+            <option value="RiskLearningSubject">RiskLearningSubject</option>
+            <option value="NewSubject">NewSubject</option>
+        </select>
+        <span id="subject-status" style="margin-left: 10px; color: gray;"></span>
+    </div>
+    
+    <!-- BLE Device Selection -->
+    <div id="ble-section" style="margin: 20px 0; padding: 15px; background: #e0e0e0; border-radius: 5px;">
+        <label for="ble-device-select"><strong>Select BLE Device:</strong></label>
+        <select id="ble-device-select" style="margin: 10px; padding: 5px;">
+            <option value="BLENano_Dev">BLENano_Dev (Feather)</option>
+            <option value="BLENano_Bo" selected>BLENano_Bo</option>
+            <option value="BLENano_PumpRFID_Setta">BLENano_PumpRFID_Setta</option>
+            <option value="BLENano_">Any BLENano device</option>
+            <option value="other">Other (scan all)</option>
+        </select>
+        <br>
+        <button id="connect-ble-button">Connect Bluetooth</button>
+        <span id="ble-status" style="margin-left: 10px; color: gray;">Not connected</span>
+    </div>
+    
+    <!-- Action Buttons -->
+    <button id="test-pump-button" style="background-color: #0066ff;">Test Pump</button>
+    <button id="clear-storage-button" style="background-color: #ff6600;">Clear Dropbox Token</button>
+    <button id="start-button">Start Experiment</button>
+</div>
     
     <!-- Experiment Screen -->
     <div id="experiment-container">

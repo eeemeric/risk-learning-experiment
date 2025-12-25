@@ -607,14 +607,13 @@ async function showOutcomeAndDeliverReward(rewardCount, position) {
     
     for (let i = 0; i < rewardCount; i++) {
         console.log("Reward " + (i + 1) + " of " + rewardCount);
-        
+
+        // Play sound
+        await playSingleRewardSound();
         // Trigger pump
         if (ble.connected) {
             await writepumpdurationtoBLE(100);
         }
-        
-        // Play sound
-        await playSingleRewardSound();
         
         // Wait between rewards
         await new Promise(resolve => setTimeout(resolve, 200));

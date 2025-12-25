@@ -190,11 +190,11 @@ function shuffleArray(array) {
 
 async function saveDataToDropbox() {
     console.log("Attempting to save data to Dropbox...");
-    
+    console.log("Current subjectName:", subjectName);  // ADD THIS LINE
     try {
         // Use selected subject name
         const subject = subjectName || "UnknownSubject";
-        
+        console.log("Using subject:", subject);  // ADD THIS LINE
         // Create filename with timestamp
         const now = new Date();
         const timestamp = now.toISOString().replace(/[:.]/g, '-');

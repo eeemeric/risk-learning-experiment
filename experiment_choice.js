@@ -397,15 +397,13 @@ async function runTrial() {
     const response = await presentTwoChoices(trialPair.stimulus1, trialPair.stimulus2);
     
     // Process response
-    if (response.correct) {
-        console.log('Correct! Chose higher value:', response.chosenValue);
-        await deliverRewardWithFeedback(response.chosenValue);
-    } else if (response.timeout) {
+    if (response.timeout) {
         console.log('Timeout - no response');
+        // No reward for timeout
     } else {
-        console.log('Incorrect. Chose:', response.chosenValue, 'instead of:', response.otherValue);
-        // Optional: still deliver reward for chosen value, or no reward
-        // await deliverRewardWithFeedback(response.chosenValue);
+        // Always deliver reward for chosen stimulus
+        console.log('Chose:', response.chosenValue, '| Optimal:', response.correct ? 'Yes' : 'No');
+        await deliverRewardWithFeedback(response.chosenValue);
     }
     
     // Save trial data
@@ -419,9 +417,9 @@ async function runTrial() {
         rightValue: getRewardValue(response.rightStimulus.path),
         choice: response.choice,
         chosenValue: response.chosenValue,
-        correct: response.correct,
+        optimalChoice: response.correct,  // Renamed from "correct" for clarity
         timeout: response.timeout || false,
-        rewardDelivered: response.correct ? response.chosenValue : 0,
+        rewardDelivered: response.timeout ? 0 : response.chosenValue,
         timestamp: new Date().toISOString()
     });
     

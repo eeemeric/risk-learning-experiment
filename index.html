@@ -282,8 +282,51 @@
         });
     </script>
     
-    <!-- Load experiment script -->
-    <script src="experiment.js?v=38"></script>
+    <!-- Experiment Scripts - Loaded dynamically -->
+    <script>
+        let experimentLoaded = false;
+        
+        async function loadExperimentScript(experimentType) {
+            // Remove previously loaded experiment script if any
+            const oldScript = document.getElementById('experiment-script');
+            if (oldScript) {
+                oldScript.remove();
+            }
+            
+            // Determine which script to load
+            let scriptName = '';
+            switch(experimentType) {
+                case 'detection':
+                    scriptName = 'experiment_detection.js';
+                    break;
+                case 'choice':
+                    scriptName = 'experiment_choice.js';
+                    break;
+                default:
+                    console.error('Unknown experiment type:', experimentType);
+                    return false;
+            }
+            
+            console.log('Loading experiment script:', scriptName);
+            
+            // Load the script
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.id = 'experiment-script';
+                script.src = scriptName + '?v=39';
+                script.onload = () => {
+                    console.log('Loaded experiment script:', scriptName);
+                    experimentLoaded = true;
+                    resolve(true);
+                };
+                script.onerror = () => {
+                    console.error('Failed to load:', scriptName);
+                    reject(false);
+                };
+                document.body.appendChild(script);
+            });
+        }
+    </script>
     
     <!-- Debug Logger (MUST BE LAST) -->
     <script>
@@ -343,6 +386,36 @@
             console.log('Storage cleared! Refreshing page...');
             alert('Storage cleared! Page will refresh.');
             window.location.reload();
+        });
+        
+        document.getElementById('start-button').addEventListener('click', async function() {
+            // Check experiment selection
+            const experimentSelect = document.getElementById('experiment-select');
+            const experimentType = experimentSelect.value;
+            
+            if (!experimentType) {
+                alert('Please select an experiment type first!');
+                return;
+            }
+            
+            // Load the appropriate experiment script if not already loaded
+            if (!experimentLoaded) {
+                try {
+                    await loadExperimentScript(experimentType);
+                } catch (error) {
+                    console.error('Error loading experiment:', error);
+                    alert('Failed to load experiment. Check console.');
+                    return;
+                }
+            }
+            
+            // Call startExperiment() which is defined in the loaded script
+            if (typeof startExperiment === 'function') {
+                startExperiment();
+            } else {
+                console.error('startExperiment function not found');
+                alert('Experiment script error. Check console.');
+            }
         });
     </script>
 </body>

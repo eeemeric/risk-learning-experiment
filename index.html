@@ -96,7 +96,7 @@
                 return new Promise((resolve, reject) => {
                     const script = document.createElement('script');
                     script.id = 'experiment-script';
-                    script.src = scriptName + '?v=39';
+                    script.src = scriptName + '?v=40';
                     script.onload = () => {
                         console.log('Loaded experiment script:', scriptName);
                         resolve(true);
@@ -173,7 +173,7 @@
 <body>
     <!-- Instructions Screen -->
 <div id="instructions">
-    <h1>Risk Learning Experiment v39</h1>
+    <h1>Risk Learning Experiment v40</h1>
     <p>In this experiment, you will see different options appear on screen.</p>
     <p>Click on the option you prefer when it appears.</p>
     <p>You will hear reward sounds based on your choices.</p>
@@ -241,7 +241,7 @@
     <script src="mkturk_dropbox.js"></script>
     <script src="mkturk_utils.js"></script>
     <script src="mkturk_ImageBuffer.js"></script>
-    <script src="mkturk_bluetooth.js?v=39"></script>
+    <script src="mkturk_bluetooth.js?v=40"></script>
     
     <!-- Initialize Dropbox and Audio -->
     <script>
@@ -313,7 +313,7 @@
             return new Promise((resolve, reject) => {
                 const script = document.createElement('script');
                 script.id = 'experiment-script';
-                script.src = scriptName + '?v=39';
+                script.src = scriptName + '?v=40';
                 script.onload = () => {
                     console.log('Loaded experiment script:', scriptName);
                     experimentLoaded = true;
@@ -386,6 +386,30 @@
             console.log('Storage cleared! Refreshing page...');
             alert('Storage cleared! Page will refresh.');
             window.location.reload();
+        });
+        
+        // ADD THIS - Connect Bluetooth button handler
+        document.getElementById('connect-ble-button').addEventListener('click', async function() {
+            console.log('Connect Bluetooth button clicked');
+            
+            try {
+                console.log('Requesting BLE device...');
+                await requestBLEDevice();
+                
+                console.log('Connecting to device...');
+                await connectBLEDeviceAndCacheCharacteristics();
+                
+                document.getElementById('ble-status').innerHTML = 'Connected!';
+                document.getElementById('ble-status').style.color = 'green';
+                console.log('BLE connected successfully');
+                
+            } catch (error) {
+                console.error('BLE connection error:', error);
+                console.error('Error name:', error.name);
+                console.error('Error message:', error.message);
+                document.getElementById('ble-status').innerHTML = 'Connection failed';
+                document.getElementById('ble-status').style.color = 'red';
+            }
         });
         
         document.getElementById('start-button').addEventListener('click', async function() {

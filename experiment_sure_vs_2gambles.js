@@ -3,7 +3,7 @@
 // Subject chooses between 1 sure and 2 gamble stimuli
 // ========================================
 
-console.log("EXPERIMENT_SURE_VS_2GAMBLES.JS LOADED - VERSION 41 - " + new Date());
+console.log("EXPERIMENT_SURE_VS_2GAMBLES.JS LOADED - VERSION 42 - " + new Date());
 
 // Global variables
 let currentTrial = 0;
@@ -15,6 +15,24 @@ let loadedImages = { sure: [], gamble: [] };
 let trialOrder = [];
 let currentBlock = 1;
 let trialWithinBlock = 0;
+
+// ========================================
+// TRIAL ORDER GENERATION
+// ========================================
+
+function generateTrialOrder() {
+    trialOrder = shuffleArray(trialOrder);
+    totalTrials = trialOrder.length;
+    console.log("Generated trial order with " + totalTrials + " trials");
+}
+
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
 
 // ========================================
 // LOAD ASSETS FROM DROPBOX
@@ -72,10 +90,28 @@ async function loadRewardSound() {
 }
 
 async function loadAssetsFromDropbox() {
-    console.log("Loading assets from Dropbox...");
+    console.log("Loading assets...");
     
     try {
-        // Load sure options
+        // Try to load from cache first
+        if (!isOnline) {
+            console.log("Offline mode - loading from cache");
+            const cachedSure = getCachedImages(CACHE_KEYS.SURE_IMAGES);
+            const cachedGamble = getCachedImages(CACHE_KEYS.GAMBLE_IMAGES);
+            
+            if (cachedSure && cachedGamble) {
+                loadedImages.sure = cachedSure;
+                loadedImages.gamble = cachedGamble;
+                console.log("Loaded from cache successfully");
+                generateTrialCombinations();
+                return;
+            } else {
+                alert("No cached data available. Please connect to internet first.");
+                return;
+            }
+        }
+        
+        // Online - load from Dropbox and cache
         const sureImagePaths = await getDropboxFolderContents("/mkturkfolders/imagebags/sure_options");
         console.log("Sure options found:", sureImagePaths.length);
         
@@ -88,7 +124,6 @@ async function loadAssetsFromDropbox() {
             });
         }
         
-        // Load gamble options
         const gambleImagePaths = await getDropboxFolderContents("/mkturkfolders/imagebags/gamble_options");
         console.log("Gamble options found:", gambleImagePaths.length);
         
@@ -101,16 +136,18 @@ async function loadAssetsFromDropbox() {
             });
         }
         
-        console.log("Total sure images:", loadedImages.sure.length);
-        console.log("Total gamble images:", loadedImages.gamble.length);
+        console.log("Total images loaded:", loadedImages.sure.length + loadedImages.gamble.length);
         
-        // Generate trial combinations
+        // Cache the images
+        cacheImages(CACHE_KEYS.SURE_IMAGES, loadedImages.sure);
+        cacheImages(CACHE_KEYS.GAMBLE_IMAGES, loadedImages.gamble);
+        
         generateTrialCombinations();
-        
         await loadRewardSound();
         
     } catch (error) {
         console.error("Error loading assets:", error);
+        alert("Failed to load assets. Check internet connection.");
     }
 }
 
@@ -135,18 +172,9 @@ function generateTrialCombinations() {
     }
     
     // Shuffle
-    trialOrder = shuffleArray(trialOrder);
-    totalTrials = trialOrder.length;
+    generateTrialOrder();
     
     console.log("Generated " + totalTrials + " trial combinations (1 sure vs 2 gambles)");
-}
-
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
 }
 
 // ========================================
@@ -155,17 +183,39 @@ function shuffleArray(array) {
 
 async function loadSubjectParameters(subject) {
     console.log("Loading parameters for subject: " + subject);
-    const paramPath = `/mkturkfolders/parameterfiles/subjects/${subject}_params.txt`;
     
     try {
+        // Try cache first
+        if (!isOnline) {
+            console.log("Offline - loading parameters from cache");
+            const cached = getCachedParameters(subject);
+            if (cached) {
+                params = cached;
+                console.log("Parameters loaded from cache");
+                document.getElementById('subject-status').innerHTML = 'Parameters (cached)';
+                document.getElementById('subject-status').style.color = 'orange';
+                return true;
+            } else {
+                alert("No cached parameters for this subject. Please connect to internet first.");
+                return false;
+            }
+        }
+        
+        // Online - load from Dropbox
+        const paramPath = `/mkturkfolders/parameterfiles/subjects/${subject}_params.txt`;
         const response = await dbx.filesDownload({ path: paramPath });
         const blob = response.result.fileBlob;
         const text = await blob.text();
         params = JSON.parse(text);
+        
+        // Cache parameters
+        cacheParameters(subject, params);
+        
         console.log("Parameters loaded:", params);
         document.getElementById('subject-status').innerHTML = 'Parameters loaded!';
         document.getElementById('subject-status').style.color = 'green';
         return true;
+        
     } catch (error) {
         console.error("Error loading parameters:", error);
         document.getElementById('subject-status').innerHTML = 'Failed to load parameters!';
@@ -179,7 +229,14 @@ async function loadSubjectParameters(subject) {
 // ========================================
 
 async function saveDataToDropbox() {
-    console.log("Saving data to Dropbox...");
+    console.log("Attempting to save data...");
+    
+    // If offline, save to local storage instead
+    if (!isOnline) {
+        console.log("Offline - saving to local storage");
+        saveDataLocally();
+        return;
+    }
     
     try {
         const subject = subjectName || "UnknownSubject";
@@ -196,7 +253,7 @@ async function saveDataToDropbox() {
                 endTime: now.toISOString(),
                 totalTrials: currentTrial,
                 totalBlocks: currentBlock,
-                version: "41"
+                version: "42"
             },
             trials: experimentData
         };
@@ -209,10 +266,41 @@ async function saveDataToDropbox() {
             mode: { '.tag': 'overwrite' }
         });
         
-        console.log("Data saved:", filename);
+        console.log("Data saved to Dropbox:", filename);
         
     } catch (error) {
-        console.error("Error saving data:", error);
+        console.error("Error saving to Dropbox:", error);
+        console.log("Falling back to local storage");
+        saveDataLocally();
+    }
+}
+
+function saveDataLocally() {
+    try {
+        const subject = subjectName || "UnknownSubject";
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const localKey = `experiment_data_${subject}_${timestamp}`;
+        
+        const dataToSave = {
+            experimentInfo: {
+                experimentType: "sure_vs_2gambles",
+                subject: subject,
+                parameters: params,
+                startTime: experimentData[0]?.timestamp || new Date().toISOString(),
+                endTime: new Date().toISOString(),
+                totalTrials: currentTrial,
+                totalBlocks: currentBlock,
+                version: "42",
+                savedLocally: true
+            },
+            trials: experimentData
+        };
+        
+        localStorage.setItem(localKey, JSON.stringify(dataToSave));
+        console.log("Data saved locally:", localKey);
+        
+    } catch (error) {
+        console.error("Error saving data locally:", error);
     }
 }
 
@@ -431,8 +519,12 @@ async function showOutcomeAndDeliverReward(rewardCount, position) {
     console.log("Delivering " + rewardCount + " rewards");
     
     for (let i = 0; i < rewardCount; i++) {
+        console.log("Reward " + (i + 1) + " of " + rewardCount);
+        
+        // Tone first (CS)
         await playSingleRewardSound();
         
+        // Then pump (US)
         if (ble.connected) {
             await writepumpdurationtoBLE(pumpDuration);
         }
@@ -440,6 +532,7 @@ async function showOutcomeAndDeliverReward(rewardCount, position) {
         await new Promise(resolve => setTimeout(resolve, 200));
     }
     
+    // Hide outcome stimulus
     if (outcomeStimulus) {
         hideStimulus(outcomeStimulus);
     }
@@ -518,7 +611,7 @@ async function runTrial() {
     
     if (trialWithinBlock >= totalTrials) {
         console.log(`Block ${currentBlock} complete. Reshuffling...`);
-        trialOrder = shuffleArray(trialOrder);
+        trialOrder = shuffleArray([...trialOrder]);
         trialWithinBlock = 0;
         currentBlock++;
     }

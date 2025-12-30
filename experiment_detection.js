@@ -64,6 +64,7 @@ async function loadSubjectParameters(subject) {
         return false;
     }
 }
+
 // Custom image loading function
 async function loadImageFromDropboxCustom(imagePath) {
     try {

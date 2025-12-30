@@ -236,8 +236,15 @@
         <p>Thank you for participating.</p>
     </div>
     
-    <!-- Debug Log (visible on screen) -->
-    <div id="debug-log">DEBUG LOG:<br></div>
+    <!-- Debug Log (hidden by default, toggle with button) -->
+    <div id="debug-log" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; height: 150px; background: black; color: lime; font-family: monospace; font-size: 12px; overflow-y: scroll; padding: 10px; z-index: 9999; border-top: 3px solid lime;">
+        DEBUG LOG:<br>
+    </div>
+    
+    <!-- Toggle Debug Button -->
+    <button id="toggle-debug-btn" style="position: fixed; bottom: 10px; right: 10px; z-index: 10000; background: #666; color: white; padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Show Debug</button>
+
+    
     
     <!-- Load MKTurk framework files -->
     <script src="mkturk_installsettings.js"></script>
@@ -455,5 +462,16 @@
             }
         });
     </script>
+
+    <script>
+        // Toggle debug console visibility
+        document.getElementById('toggle-debug-btn').addEventListener('click', function() {
+            const debugLog = document.getElementById('debug-log');
+            const isHidden = debugLog.style.display === 'none';
+            debugLog.style.display = isHidden ? 'block' : 'none';
+            this.textContent = isHidden ? 'Hide Debug' : 'Show Debug';
+        });
+    </script>
+    
 </body>
 </html>

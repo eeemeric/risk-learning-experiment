@@ -155,7 +155,6 @@ async function loadAssetsFromDropbox() {
                 loadedImages.sure = cachedSure;
                 loadedImages.gamble = cachedGamble;
                 console.log("Loaded from cache successfully");
-                generateTrialOrder();
                 return;
             } else {
                 alert("No cached data available. Please connect to internet first.");
@@ -193,8 +192,7 @@ async function loadAssetsFromDropbox() {
         // Cache the images
         cacheImages(CACHE_KEYS.SURE_IMAGES, loadedImages.sure);
         cacheImages(CACHE_KEYS.GAMBLE_IMAGES, loadedImages.gamble);
-        
-        generateTrialOrder();
+         
         await loadRewardSound();
         
     } catch (error) {

@@ -155,6 +155,7 @@ async function loadAssetsFromDropbox() {
                 loadedImages.sure = cachedSure;
                 loadedImages.gamble = cachedGamble;
                 console.log("Loaded from cache successfully");
+                // Detection task doesn't need trial order generation
                 return;
             } else {
                 alert("No cached data available. Please connect to internet first.");

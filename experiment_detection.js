@@ -154,6 +154,7 @@ async function loadAssetsFromDropbox() {
             if (cachedSure && cachedGamble) {
                 loadedImages.sure = cachedSure;
                 loadedImages.gamble = cachedGamble;
+                console.log("After loading - Sure:", loadedImages.sure.length, "Gamble:", loadedImages.gamble.length);
                 console.log("Loaded from cache successfully");
                 generateTrialOrder();  // Add this line
                 // Detection task doesn't need trial order generation
@@ -491,10 +492,15 @@ async function showOutcome(rewardCount, position) {
 function generateTrialOrder() {
     // Create array of indices for all loaded images
     const totalImages = loadedImages.sure.length + loadedImages.gamble.length;
+     console.log("Total images available:", totalImages);
+    console.log("Sure images:", loadedImages.sure.length);
+    console.log("Gamble images:", loadedImages.gamble.length);
+    
     trialOrder = shuffleArray([...Array(totalImages).keys()]);
     totalTrials = trialOrder.length;
     
     console.log("Generated trial order with " + totalTrials + " stimuli");
+    console.log("Trial order:", trialOrder);
 }
 
 function shuffleArray(array) {

@@ -1,9 +1,7 @@
 #include "ble/BLE.h"
-
-// Serial for debugging
-Serial pc(USBTX, USBRX);
-
 Gap::ConnectionParams_t fast;
+
+// For pin definitions, consult https://developer.mbed.org/users/mbed_official/code/mbed-src/file/a11c0372f0ba/targets/hal/TARGET_NORDIC/TARGET_MCU_NRF51822/TARGET_RBLAB_BLENANO
 
 // Pins connected on the device
 DigitalOut ledpump(P0_19, 1);   // pin 19: D13 (LED on device)
@@ -12,8 +10,8 @@ DigitalOut pumpon(P0_28, 1);    // pin 28: D4
 
 // Unique identified for the various messages exchanges
 uint16_t customServiceUUID          = 0xA000;  // Service
-uint16_t writeUUID_connectionstatus = 0xA001;  // Characteristic for connection status
-uint16_t writeUUID_pumpduration     = 0xA002;  // Characteristic for pump on duration
+uint16_t writeUUID_connectionstatus = 0xA001;  // Characteristic for connection status (write this value from Javascript)
+uint16_t writeUUID_pumpduration     = 0xA002;  // Characteristic for pump on duration (write this value from Javascript)
 
 // Set device name
 const static char     DEVICE_NAME[] = "BLENano_Bo";
@@ -47,11 +45,12 @@ void messageReceivedCallback(const GattWriteCallbackParams *params) {
         // Get duration from command
         short* pdatashort = (short*) params->data;
         float duration = ((float) *pdatashort / 1000.);
-        pc.printf("duration: %d\n\r", int(duration * 1000));
+        //printf("data in pointer: %d\n\r", *pdatashort);  
+        printf("duration: %d\n\r", int(duration * 1000));
 
         // Execute the pump command
         if (params->handle == writePumpDurationChar.getValueHandle()) {
-            pc.printf("Trigger pump\n\r");
+            printf("Trigger pump\n\r");
             ledpump = 0;  // onboard LED has reverse logic
             pumpon  = 1;            
             wait(duration);
@@ -61,7 +60,7 @@ void messageReceivedCallback(const GattWriteCallbackParams *params) {
 
         // Blink LED whenever we receive ping
         if (params->handle == writeConnectionStatusChar.getValueHandle()) {
-            pc.printf("Received ping\n\r");
+            printf("Received ping\n\r");
             ledping = 0;  // onboard LED has reverse logic
             wait(duration);
             ledping = 1;
@@ -71,7 +70,6 @@ void messageReceivedCallback(const GattWriteCallbackParams *params) {
  
 // Callback that is executed when connection lost: make BLE available for pairing
 void disconnectionCallback(const Gap::DisconnectionCallbackParams_t *) {
-    pc.printf("Disconnected\n\r");
     BLE::Instance(BLE::DEFAULT_INSTANCE).gap().startAdvertising();
 }
 
@@ -82,24 +80,21 @@ void bleInitComplete(BLE::InitializationCompleteCallbackContext *params) {
     BLE &ble          = params->ble;
     ble_error_t error = params->error;
     if (error != BLE_ERROR_NONE) {
-        pc.printf("BLE init error: %d\n\r", error);
         return;
     }
-
-    pc.printf("BLE initialized\n\r");
 
     // Set up the callbacks
     ble.gap().onDisconnection(disconnectionCallback);
     ble.gattServer().onDataWritten(messageReceivedCallback);
 
-    // Set up advertising type, name of device, and characteristics
-    ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::BREDR_NOT_SUPPORTED | GapAdvertisingData::LE_GENERAL_DISCOVERABLE);
-    ble.gap().setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED);
-    ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LOCAL_NAME, (uint8_t*) DEVICE_NAME, sizeof(DEVICE_NAME));
-    ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_16BIT_SERVICE_IDS, (uint8_t*) uuid16_list, sizeof(uuid16_list));
+    // Set up advertising type, name of device, and characteristics (visible to devices trying to pair)
+    ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::BREDR_NOT_SUPPORTED | GapAdvertisingData::LE_GENERAL_DISCOVERABLE); // BLE only, no classic BT
+    ble.gap().setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED); // advertising type
+    ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LOCAL_NAME, (uint8_t*) DEVICE_NAME, sizeof(DEVICE_NAME)); // device name
+    ble.gap().accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_16BIT_SERVICE_IDS, (uint8_t*) uuid16_list, sizeof(uuid16_list)); // UUID's broadcast in advertising packet
     ble.gap().setAdvertisingInterval(25);
     
-    // Connection parameter suggestions
+    // Connection parameter suggetions that are controlled by the client
     ble.getPreferredConnectionParams(&fast);
     fast.minConnectionInterval = 8;
     fast.maxConnectionInterval = 16;
@@ -109,19 +104,15 @@ void bleInitComplete(BLE::InitializationCompleteCallbackContext *params) {
     // Add our custom service
     ble.addService(customService);
 
-    // Start advertising
+    // Start advertising: this makes the device available for pairing
     ble.gap().startAdvertising();
-    pc.printf("Advertising started\n\r");
 }
 
 // Main program
 int main(void) {
-    // Initialize serial
-    pc.baud(115200);
-    wait(1);
-    
+
     // Set up BLE
-    pc.printf("\n\rStarting BLE Device: %s\n\r", DEVICE_NAME);        
+    printf("Starting BLE Device: %s\n\r", DEVICE_NAME);        
     BLE& ble = BLE::Instance(BLE::DEFAULT_INSTANCE);
     ble.init(bleInitComplete);
 
@@ -130,12 +121,8 @@ int main(void) {
     ledping = 1;  // onboard LED has reverse logic
     pumpon  = 0;
     
-    pc.printf("Waiting for BLE init...\n\r");
-    
     // Wait until device is initialized
     while(ble.hasInitialized() == false) {}
-
-    pc.printf("BLE Device ready!\n\r");
 
     // Infinite loop: wait for events
     while (true) {

@@ -325,11 +325,14 @@
             initializeDropbox();
         });
     </script>
+
+    <!-- Load shared utilities FIRST -->
+    <script src="experiment_utils.js?v=42"></script>
     
     <!-- Experiment Scripts - Loaded dynamically -->
     <script>
         let experimentLoaded = false;
-        
+    
         async function loadExperimentScript(experimentType) {
             const oldScript = document.getElementById('experiment-script');
             if (oldScript) {
@@ -366,7 +369,7 @@
             return new Promise((resolve, reject) => {
                 const script = document.createElement('script');
                 script.id = 'experiment-script';
-                script.src = scriptName + '?v=41';
+                script.src = scriptName + '?v=42';
                 script.onload = () => {
                     console.log('Loaded experiment script:', scriptName);
                     experimentLoaded = true;

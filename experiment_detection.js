@@ -697,76 +697,46 @@ async function connectBluetooth() {
 // ========================================
 
 async function showOutcomeAndDeliverReward(rewardCount, position) {
-    try {
-        console.log("DEBUG OUTCOME: Starting showOutcomeAndDeliverReward with rewardCount:", rewardCount);
-        console.log("DEBUG OUTCOME: Position:", position);
-        console.log("DEBUG OUTCOME: loadedImages:", loadedImages);
+    // Don't clear display - just hide stimuli
+    const container = document.getElementById('experiment-container');
+    const stimuli = container.querySelectorAll('.stimulus');
+    stimuli.forEach(stimulus => hideStimulus(stimulus));
+    
+    // Small delay instead of clearDisplay
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    const sureFilename = `sure${rewardCount}.png`;
+    const sureStimulus = loadedImages.sure.find(img => 
+        img.path.toLowerCase().endsWith(sureFilename)
+    );
+    
+    let outcomeStimulus = null;
+    
+    if (sureStimulus) {
+        outcomeStimulus = showStimulus(sureStimulus.image, position);
+    }
+    
+    const pumpDuration = params.PumpDuration || 100;
+    
+    console.log("Delivering " + rewardCount + " rewards");
+    
+    for (let i = 0; i < rewardCount; i++) {
+        console.log("Reward " + (i + 1) + " of " + rewardCount);
         
-        // Clear display for 100ms
-        console.log("DEBUG OUTCOME: Clearing display");
-        clearDisplay();
-        console.log("DEBUG OUTCOME: Waiting 100ms");
-        await new Promise(resolve => setTimeout(resolve, 100));
-        console.log("DEBUG OUTCOME: Wait complete");
+        // Tone first (CS)
+        await playSingleRewardSound();
         
-        // Find the corresponding sure stimulus image
-        const sureFilename = `sure${rewardCount}.png`;
-        console.log("DEBUG OUTCOME: Looking for:", sureFilename);
-        
-        const sureStimulus = loadedImages.sure.find(img => 
-            img.path.toLowerCase().endsWith(sureFilename)
-        );
-        
-        console.log("DEBUG OUTCOME: Found stimulus:", sureStimulus ? sureStimulus.path : "NOT FOUND");
-        
-        let outcomeStimulus = null;
-        
-        if (sureStimulus) {
-            outcomeStimulus = showStimulus(sureStimulus.image, position);
-            console.log("DEBUG OUTCOME: Showing outcome stimulus");
-        } else {
-            console.log("DEBUG OUTCOME: No outcome stimulus found for reward count", rewardCount);
+        // Then pump (US)
+        if (ble.connected) {
+            await writepumpdurationtoBLE(pumpDuration);
         }
         
-        // Get pump duration from params (default 100ms)
-        const pumpDuration = params.PumpDuration || 100;
-        console.log("DEBUG OUTCOME: Pump duration:", pumpDuration);
-        
-        // Deliver rewards with sound
-        console.log("Delivering " + rewardCount + " rewards");
-        
-        for (let i = 0; i < rewardCount; i++) {
-            console.log("Reward " + (i + 1) + " of " + rewardCount);
-            
-            // Play sound first (CS)
-            await playSingleRewardSound();
-            console.log("DEBUG OUTCOME: Sound played");
-            
-            // Then trigger pump (US)
-            if (ble.connected) {
-                console.log("DEBUG OUTCOME: BLE connected, triggering pump");
-                await writepumpdurationtoBLE(pumpDuration);
-            } else {
-                console.log("DEBUG OUTCOME: BLE not connected, skipping pump");
-            }
-            
-            // Wait between rewards
-            await new Promise(resolve => setTimeout(resolve, 200));
-        }
-        
-        console.log("DEBUG OUTCOME: Reward delivery complete");
-        
-        // Hide outcome stimulus
-        if (outcomeStimulus) {
-            hideStimulus(outcomeStimulus);
-            console.log("DEBUG OUTCOME: Outcome stimulus hidden");
-        }
-        
-        console.log("DEBUG OUTCOME: showOutcomeAndDeliverReward complete");
-        
-    } catch (error) {
-        console.error("ERROR in showOutcomeAndDeliverReward:", error);
-        console.error("Error stack:", error.stack);
+        await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    
+    // Hide outcome stimulus
+    if (outcomeStimulus) {
+        hideStimulus(outcomeStimulus);
     }
 }
 

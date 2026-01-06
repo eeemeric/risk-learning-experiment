@@ -264,7 +264,7 @@
     <button id="test-pump-button" style="background-color: #0066ff;">Test Pump</button>
     <button id="clear-storage-button" style="background-color: #ff6600;">Clear Dropbox Token</button>
     <button id="fullscreen-btn" style="background-color: #FF6B35; margin-left: 10px;">Enter Fullscreen</button>
-    <button id="start-button">Start Experiment</button>
+    <button id="start-button" onclick="requestFullscreenThenStart()">Start Experiment</button>
 </div>
     
     <!-- Experiment Screen -->
@@ -388,6 +388,27 @@
                 };
                 document.body.appendChild(script);
             });
+        }
+
+        function requestFullscreenThenStart() {
+            const elem = document.documentElement;
+            
+            // Request fullscreen first (requires user gesture)
+            const fullscreenPromise = elem.requestFullscreen ? elem.requestFullscreen()
+                : elem.webkitRequestFullscreen ? elem.webkitRequestFullscreen()
+                : elem.msRequestFullscreen ? elem.msRequestFullscreen()
+                : Promise.resolve();
+            
+            // Then start the experiment
+            fullscreenPromise
+                .then(() => {
+                    console.log('Entered fullscreen');
+                    startExperiment();
+                })
+                .catch(err => {
+                    console.warn('Fullscreen failed, starting experiment anyway:', err);
+                    startExperiment();
+                });
         }
     </script>
     

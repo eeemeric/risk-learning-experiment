@@ -313,14 +313,17 @@ function showStimulus(image, position) {
     img.style.width = '150px';
     img.style.height = '150px';
     img.style.cursor = 'pointer';
+    img.style.zIndex = '10';
     
+    // Position relative to viewport, not container
     if (position === 'left') {
-        img.style.left = '25%';
+        img.style.left = '20%';
     } else if (position === 'right') {
-        img.style.left = '75%';
+        img.style.left = '80%';
     } else if (position === 'center') {
         img.style.left = '50%';
     }
+    
     img.style.top = '50%';
     img.style.transform = 'translate(-50%, -50%)';
     

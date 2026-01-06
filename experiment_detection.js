@@ -409,51 +409,45 @@ function clearDisplay() {
 // 5. SINGLE STIMULUS PRESENTATION
 // ========================================
 
-async function presentSingleStimulus(image, imagePath, stimulusType) {
+async function presentSingleStimulus(image, imagePath) {
     return new Promise((resolve) => {
         clearDisplay();
         
-        // Randomly choose left, right, or center position
-        const positions = ['left', 'right', 'center'];
-        const position = positions[Math.floor(Math.random() * positions.length)];
-        
-        // Show single stimulus
+        const position = Math.random() > 0.5 ? 'left' : 'right';
         const stimulus = showStimulus(image, position);
         
         let responseMade = false;
         
-        // Correct response: click on the stimulus
         const handleStimulusClick = (event) => {
+            event.preventDefault();
             event.stopPropagation();
             if (!responseMade) {
                 responseMade = true;
                 hideStimulus(stimulus);
                 document.getElementById('experiment-container').removeEventListener('click', handleBackgroundClick);
-                resolve({ correct: true, position: position, imagePath: imagePath, stimulusType: stimulusType });
+                resolve({ correct: true, position: position, imagePath: imagePath });
             }
         };
         
-        // Incorrect response: click anywhere else
         const handleBackgroundClick = () => {
             if (!responseMade) {
                 responseMade = true;
                 hideStimulus(stimulus);
                 stimulus.removeEventListener('click', handleStimulusClick);
-                resolve({ correct: false, position: position, imagePath: imagePath, stimulusType: stimulusType });
+                resolve({ correct: false, position: position, imagePath: imagePath });
             }
         };
         
-        stimulus.addEventListener('click', handleStimulusClick);
+        stimulus.addEventListener('click', handleStimulusClick, { passive: false });
         document.getElementById('experiment-container').addEventListener('click', handleBackgroundClick);
         
-        // Timeout (also incorrect)
         setTimeout(() => {
             if (!responseMade) {
                 responseMade = true;
                 hideStimulus(stimulus);
                 stimulus.removeEventListener('click', handleStimulusClick);
                 document.getElementById('experiment-container').removeEventListener('click', handleBackgroundClick);
-                resolve({ correct: false, position: position, imagePath: imagePath, stimulusType: stimulusType, timeout: true });
+                resolve({ correct: false, position: position, imagePath: imagePath, timeout: true });
             }
         }, params.ChoiceTimeOut || 10000);
     });

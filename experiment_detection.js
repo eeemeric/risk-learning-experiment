@@ -636,26 +636,6 @@ async function startExperiment() {
     document.getElementById('instructions').style.display = 'none';
     document.getElementById('experiment-container').style.display = 'block';
     
-    // Add black background class to body
-    document.body.classList.add('experiment-running');
-    
-    // Enter fullscreen automatically
-    const elem = document.documentElement;
-    if (elem.requestFullscreen) {
-        elem.requestFullscreen();
-    } else if (elem.webkitRequestFullscreen) { /* Safari */
-        elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) { /* IE11 */
-        elem.msRequestFullscreen();
-    }
-    // Enter fullscreen automatically
-    setTimeout(() => {
-        const elem = document.documentElement;
-        const request = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.msRequestFullscreen;
-        if (request) {
-            request.call(elem).catch(err => console.error('Fullscreen error:', err));
-        }
-    }, 100);
     // Start first trial (or runTrial() depending on your code)
     runTrial();
 }

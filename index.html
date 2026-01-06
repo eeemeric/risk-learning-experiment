@@ -71,6 +71,17 @@
             box-shadow: none;
             background-color: black;
         }
+
+        /* Hide elements during experiment */
+        body.experiment-running #connection-status,
+        body.experiment-running #toggle-debug-btn {
+            display: none !important;
+        }
+        
+        /* Optional: Hide the entire instructions section */
+        body.experiment-running #instructions {
+            display: none;
+        }
         
         #completion {
             display: none;

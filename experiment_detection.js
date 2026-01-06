@@ -714,6 +714,7 @@ async function showOutcomeAndDeliverReward(rewardCount, position) {
     
     if (sureStimulus) {
         outcomeStimulus = showStimulus(sureStimulus.image, position);
+        // Show immediately - no fade
     }
     
     const pumpDuration = params.PumpDuration || 100;

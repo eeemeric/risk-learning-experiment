@@ -88,6 +88,12 @@
         background-color: black !important;
         cursor: pointer;
         z-index: 9999;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        outline: none;
+        box-shadow: none;
     }
 
     body.experiment-running #experiment-container {
@@ -103,10 +109,18 @@
     .stimulus {
         transition: opacity 0.2s ease-in-out;
         z-index: 10;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        outline: none;
+        box-shadow: none;
+        -webkit-tap-highlight-color: transparent;
     }
-
-    .stimulus:hover {
-        opacity: 0.8;
+    
+    .stimulus:active {
+        outline: none;
+        box-shadow: none;
     }
 
     #completion {

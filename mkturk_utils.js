@@ -352,6 +352,64 @@ async function runPump(str){
   }
 }
 
+async function showOutcomeAndDeliverReward(rewardCount, position, loadedImages, params, ble) {
+    logDebug(`showOutcomeAndDeliverReward: ${rewardCount} rewards`);
+    
+    // Immediately hide all stimuli
+    const container = document.getElementById('experiment-container');
+    const stimuli = container.querySelectorAll('.stimulus');
+    
+    stimuli.forEach(stimulus => {
+        stimulus.style.display = 'none';
+    });
+    
+    // Wait to avoid flash
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    const sureFilename = `sure${rewardCount}.png`;
+    const sureStimulus = loadedImages.sure.find(img => 
+        img.path.toLowerCase().endsWith(sureFilename)
+    );
+    
+    let outcomeStimulus = null;
+    
+    if (sureStimulus) {
+        outcomeStimulus = showStimulus(sureStimulus.image, position);
+    }
+    
+    const pumpDuration = params.PumpDuration || 100;
+    
+    logDebug(`Delivering ${rewardCount} rewards, pump duration: ${pumpDuration}ms`);
+    
+    for (let i = 0; i < rewardCount; i++) {
+        logDebug(`Reward ${i + 1}/${rewardCount}`);
+        
+        await playSingleRewardSound();
+        
+        // Try Feather (USB) first
+        if (device) {
+            logDebug(`Sending to Feather...`);
+            await sendPumpCommand(pumpDuration);
+        } 
+        // Then try BLE
+        else if (ble && ble.connected) {
+            logDebug(`Sending to BLE...`);
+            await writepumpdurationtoBLE(pumpDuration);
+        }
+        else {
+            logDebug(`No device connected`);
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 200));
+    }
+    
+    if (outcomeStimulus) {
+        hideStimulus(outcomeStimulus);
+    }
+    
+    logDebug(`Reward delivery complete`);
+}
+
 function timeout(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }

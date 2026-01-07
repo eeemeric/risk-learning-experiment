@@ -546,7 +546,96 @@
                 }
             }
         }
+
+        // ========================================
+// WEB SERIAL API - USB Device Communication
+// ========================================
+
+let serialPort = null;
+let serialReader = null;
+
+async function connectToFeather() {
+    try {
+        // Request USB device
+        serialPort = await navigator.serial.requestPort();
+        
+        // Open the port
+        await serialPort.open({ baudRate: 115200 });
+        
+        console.log("Connected to Feather 32u4");
+        document.getElementById('connection-status').innerHTML = '🟢 Feather Connected';
+        document.getElementById('connection-status').style.color = 'green';
+        
+        // Start reading from serial
+        readFromSerial();
+        
+        return true;
+    } catch (error) {
+        console.error('Failed to connect to Feather:', error);
+        document.getElementById('connection-status').innerHTML = '🔴 Feather Not Found';
+        document.getElementById('connection-status').style.color = 'red';
+        return false;
+    }
+}
+
+async function readFromSerial() {
+    try {
+        while (true) {
+            const reader = serialPort.readable.getReader();
+            try {
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    
+                    // Log serial output
+                    const text = new TextDecoder().decode(value);
+                    console.log("Feather:", text.trim());
+                }
+            } finally {
+                reader.releaseLock();
+            }
+        }
+    } catch (error) {
+        console.error('Serial read error:', error);
+    }
+}
+
+async function sendPumpCommand(durationMs) {
+    if (!serialPort || !serialPort.writable) {
+        console.warn('Serial port not connected');
+        return false;
+    }
+    
+    try {
+        // Create 2-byte command
+        const byte1 = durationMs & 0xFF;
+        const byte2 = (durationMs >> 8) & 0xFF;
+        const command = new Uint8Array([byte1, byte2]);
+        
+        // Send to Feather
+        const writer = serialPort.writable.getWriter();
+        await writer.write(command);
+        writer.releaseLock();
+        
+        console.log(`Pump command sent: ${durationMs}ms`);
+        return true;
+    } catch (error) {
+        console.error('Failed to send pump command:', error);
+        return false;
+    }
+}
+
+async function disconnectFeather() {
+    if (serialPort) {
+        await serialPort.close();
+        serialPort = null;
+        console.log("Disconnected from Feather");
+        document.getElementById('connection-status').innerHTML = '🔴 Feather Disconnected';
+        document.getElementById('connection-status').style.color = 'red';
+    }
+}
     </script>
+
     
     
 </body>

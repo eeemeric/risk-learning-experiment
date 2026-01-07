@@ -248,6 +248,7 @@
         <br>
         <button id="connect-ble-button">Connect Bluetooth</button>
         <span id="ble-status" style="margin-left: 10px; color: gray;">Not connected</span>
+        <button id="feather-connect-btn" style="background-color: #FF6B35; margin: 5px;">Connect Feather (USB)</button>
     </div>
     
     <!-- Action Buttons -->
@@ -403,6 +404,7 @@
                     startExperiment();
                 });
         }
+        
     </script>
     
     <!-- Debug Logger (MUST BE LAST) -->
@@ -516,6 +518,16 @@
             } else {
                 console.error('startExperiment function not found');
                 alert('Experiment script error. Check console.');
+            }
+        });
+        
+        document.getElementById('feather-connect-btn').addEventListener('click', async function() {
+            if (serialPort) {
+                await disconnectFeather();
+                this.textContent = 'Connect Feather (USB)';
+            } else {
+                const connected = await connectToFeather();
+                this.textContent = connected ? 'Disconnect Feather' : 'Connect Feather (USB)';
             }
         });
     </script>

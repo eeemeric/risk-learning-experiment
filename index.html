@@ -605,23 +605,21 @@ async function connectToFeather() {
 
 async function sendPumpCommand(durationMs) {
     if (!device) {
-        console.warn('Feather not connected');
+        logDebug('Feather not connected');
         return false;
     }
     
     try {
-        // Format: {duration}
         const command = `{${durationMs}}`;
         const encoder = new TextEncoder();
         const data = encoder.encode(command);
         
-        // Send to Feather
         await device.transferOut(1, data);
         
-        console.log(`Pump command sent: ${command}`);
+        logDebug(`Pump sent: ${command}`);
         return true;
     } catch (error) {
-        console.error('Failed to send pump command:', error);
+        logDebug(`Pump error: ${error.message}`);
         return false;
     }
 }
@@ -640,8 +638,17 @@ async function disconnectFeather() {
     }
 }
     </script>
-
+    <!-- Debug output display -->
+    <div id="debug-output" style="position: fixed; top: 50px; right: 10px; background: black; color: lime; padding: 10px; font-size: 10px; max-width: 200px; max-height: 150px; overflow-y: auto; border: 1px solid lime; z-index: 10000; display: none;">
+    </div>
     
-    
+    <script>
+    function logDebug(message) {
+        console.log(message);
+        const debugDiv = document.getElementById('debug-output');
+        debugDiv.innerHTML += message + '<br>';
+        debugDiv.style.display = 'block';
+    }
+    </script>
 </body>
 </html>

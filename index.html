@@ -572,31 +572,33 @@ async function connectToFeather() {
         
         if (devices.length > 0) {
             device = devices[0];
+            logDebug("Found existing device");
         } else {
+            logDebug("Requesting new device...");
             device = await navigator.usb.requestDevice({ filters: [] });
         }
         
         if (!device) {
-            console.error('No device selected');
+            logDebug('No device selected');
             return false;
         }
         
-        // Open the device
+        logDebug("Opening device...");
         await device.open();
         
-        // Set the configuration
+        logDebug("Selecting configuration...");
         await device.selectConfiguration(1);
         
-        // Claim the interface
+        logDebug("Claiming interface...");
         await device.claimInterface(2);
         
-        console.log("Connected to Feather 32u4");
+        logDebug("Connected to Feather!");
         document.getElementById('connection-status').innerHTML = '🟢 Feather Connected';
         document.getElementById('connection-status').style.color = 'green';
         
         return true;
     } catch (error) {
-        console.error('Failed to connect to Feather:', error);
+        logDebug(`Connection error: ${error.message}`);
         document.getElementById('connection-status').innerHTML = '🔴 Feather Not Found';
         document.getElementById('connection-status').style.color = 'red';
         return false;
@@ -628,13 +630,13 @@ async function disconnectFeather() {
     if (device) {
         try {
             await device.close();
-            device = null;
-            console.log("Disconnected from Feather");
-            document.getElementById('connection-status').innerHTML = '🔴 Feather Disconnected';
-            document.getElementById('connection-status').style.color = 'red';
         } catch (error) {
-            console.error('Error closing device:', error);
+            logDebug(`Close error: ${error.message}`);
         }
+        device = null;
+        logDebug("Feather disconnected");
+        document.getElementById('connection-status').innerHTML = '🔴 Feather Disconnected';
+        document.getElementById('connection-status').style.color = 'red';
     }
 }
     </script>

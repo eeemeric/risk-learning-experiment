@@ -340,10 +340,33 @@
                 const data = encoder.encode(command);
                 logDebug(`Data length: ${data.length} bytes`);
                 
-                await window.device.transferOut(1, data);
-                
-                logDebug(`✓ Pump command sent`);
-                return true;
+                // Try endpoint 4 first (common for WebUSB)
+                try {
+                    await window.device.transferOut(4, data);
+                    logDebug(`✓ Pump command sent (endpoint 4)`);
+                    return true;
+                } catch (e1) {
+                    logDebug(`Endpoint 4 failed: ${e1.message}`);
+                    
+                    // Try endpoint 3
+                    try {
+                        await window.device.transferOut(3, data);
+                        logDebug(`✓ Pump command sent (endpoint 3)`);
+                        return true;
+                    } catch (e2) {
+                        logDebug(`Endpoint 3 failed: ${e2.message}`);
+                        
+                        // Try endpoint 2
+                        try {
+                            await window.device.transferOut(2, data);
+                            logDebug(`✓ Pump command sent (endpoint 2)`);
+                            return true;
+                        } catch (e3) {
+                            logDebug(`Endpoint 2 failed: ${e3.message}`);
+                            throw e3;
+                        }
+                    }
+                }
             } catch (error) {
                 logDebug(`✗ Pump error: ${error.message}`);
                 return false;

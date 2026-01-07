@@ -5,11 +5,11 @@
 // PATH & APP KEY from Dropbox Developer Console for
 // MKTURK.HTML & LIVEPLOT.HTML
 // ------ Dropbox WebApp settings ------ 
-var DBX_CLIENT_ID = "kjfmygfpzkpi5rk"
-var DBX_REDIRECT_URI_ROOT = "https://eeemeric.github.io/risk-learning-experiment/"
+var DBX_CLIENT_ID = "mfdmydq5uf67my5"
+var DBX_REDIRECT_URI_ROOT = "https://lomedi.github.io/risk-learning-experiment/blob/Self-Control-Experiment/index.html"
 
 // ------ Subject settings ------ 
-var subjectlist = ["RiskLearningSubject"];
+var subjectlist = ["SelfControlTask"];
 
 // ------ Save location settings ------
 var DATA_SAVEPATH = "/mkturkfolders/datafiles/"
@@ -19,6 +19,7 @@ var SOUND_FILEPREFIX = "/mkturkfolders/sounds/au"
 // ------ Misc. -----------------------
 var ndatafiles2read=5; // todo: change to trials. and use as upper bound (stop reading once you hit the first discrepancy). maybe this is effectively synonymous with mintrials
 var num_preload_images=0; // how long can you/the NHP bother waiting at each imageload? 400 images ~ 30 seconds. Recommended to keep = 0 with good internet connection and automator on
+
 
 
 

@@ -280,55 +280,64 @@
     <script>
         window.device = null;  // Feather USB device
     </script>
-
+    
     <!-- ========================================
-         WEBUSB - FEATHER 32u4 COMMUNICATION
-         ======================================== -->
+    WEBUSB - FEATHER 32u4 COMMUNICATION
+    ======================================== -->
     <script>
-        async function connectToFeather() {
+       // ========================================
+        // WEB SERIAL API - Leonardo Communication
+        // ========================================
+
+        let serialPort = null;
+        let serialReader = null;
+        let keepReading = true;
+
+        async function connectToLeonardo() {
             try {
-                const devices = await navigator.usb.getDevices();
+                logDebug("Requesting serial port...");
+                serialPort = await navigator.serial.requestPort();
                 
-                if (devices.length > 0) {
-                    window.device = devices[0];
-                    logDebug("Found existing device");
-                } else {
-                    logDebug("Requesting new device...");
-                    window.device = await navigator.usb.requestDevice({ filters: [] });
-                }
+                logDebug("Opening serial port...");
+                await serialPort.open({ baudRate: 57600 });
                 
-                if (!window.device) {
-                    logDebug('No device selected');
-                    return false;
-                }
-                
-                logDebug("Opening device...");
-                await window.device.open();
-                
-                logDebug("Selecting configuration...");
-                await window.device.selectConfiguration(1);
-                
-                logDebug("Claiming interface...");
-                await window.device.claimInterface(2);
-                
-                logDebug("Connected to Feather!");
-                document.getElementById('connection-status').innerHTML = '🟢 Feather Connected';
+                logDebug("Connected to Leonardo!");
+                document.getElementById('connection-status').innerHTML = '🟢 Leonardo Connected';
                 document.getElementById('connection-status').style.color = 'green';
+                
+                // Start reading from serial
+                readFromSerial();
                 
                 return true;
             } catch (error) {
                 logDebug(`Connection error: ${error.message}`);
-                document.getElementById('connection-status').innerHTML = '🔴 Feather Not Found';
+                document.getElementById('connection-status').innerHTML = '🔴 Leonardo Not Found';
                 document.getElementById('connection-status').style.color = 'red';
                 return false;
+            }
+        }
+
+        async function readFromSerial() {
+            try {
+                const reader = serialPort.readable.getReader();
+                while (keepReading) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    
+                    const text = new TextDecoder().decode(value);
+                    logDebug(`Leonardo: ${text.trim()}`);
+                }
+                reader.releaseLock();
+            } catch (error) {
+                logDebug(`Serial read error: ${error.message}`);
             }
         }
 
         async function sendPumpCommand(durationMs) {
             logDebug(`sendPumpCommand called: ${durationMs}ms`);
             
-            if (!window.device) {
-                logDebug('Feather not connected');
+            if (!serialPort || !serialPort.writable) {
+                logDebug('Leonardo not connected');
                 return false;
             }
             
@@ -336,54 +345,33 @@
                 const command = `{${durationMs}}`;
                 logDebug(`Sending: ${command}`);
                 
+                const writer = serialPort.writable.getWriter();
                 const encoder = new TextEncoder();
                 const data = encoder.encode(command);
-                logDebug(`Data length: ${data.length} bytes`);
                 
-                // Try endpoint 4 first (common for WebUSB)
-                try {
-                    await window.device.transferOut(4, data);
-                    logDebug(`✓ Pump command sent (endpoint 4)`);
-                    return true;
-                } catch (e1) {
-                    logDebug(`Endpoint 4 failed: ${e1.message}`);
-                    
-                    // Try endpoint 3
-                    try {
-                        await window.device.transferOut(3, data);
-                        logDebug(`✓ Pump command sent (endpoint 3)`);
-                        return true;
-                    } catch (e2) {
-                        logDebug(`Endpoint 3 failed: ${e2.message}`);
-                        
-                        // Try endpoint 2
-                        try {
-                            await window.device.transferOut(2, data);
-                            logDebug(`✓ Pump command sent (endpoint 2)`);
-                            return true;
-                        } catch (e3) {
-                            logDebug(`Endpoint 2 failed: ${e3.message}`);
-                            throw e3;
-                        }
-                    }
-                }
+                await writer.write(data);
+                writer.releaseLock();
+                
+                logDebug(`✓ Pump command sent`);
+                return true;
             } catch (error) {
                 logDebug(`✗ Pump error: ${error.message}`);
                 return false;
             }
         }
 
-        async function disconnectFeather() {
-            if (window.device) {
+        async function disconnectLeonardo() {
+            if (serialPort) {
                 try {
-                    await window.device.close();
+                    keepReading = false;
+                    await serialPort.close();
+                    serialPort = null;
+                    logDebug("Leonardo disconnected");
+                    document.getElementById('connection-status').innerHTML = '🔴 Leonardo Disconnected';
+                    document.getElementById('connection-status').style.color = 'red';
                 } catch (error) {
                     logDebug(`Close error: ${error.message}`);
                 }
-                window.device = null;
-                logDebug("Feather disconnected");
-                document.getElementById('connection-status').innerHTML = '🔴 Feather Disconnected';
-                document.getElementById('connection-status').style.color = 'red';
             }
         }
 
@@ -532,14 +520,14 @@
 
         document.getElementById('start-button').addEventListener('click', requestFullscreenThenStart);
 
-        // Feather USB connection
+        // Leonardo Serial connection
         document.getElementById('feather-connect-btn').addEventListener('click', async function() {
-            if (window.device) {
-                await disconnectFeather();
-                this.textContent = 'Connect Feather (USB)';
+            if (serialPort) {
+                await disconnectLeonardo();
+                this.textContent = 'Connect Leonardo (USB)';
             } else {
-                const connected = await connectToFeather();
-                this.textContent = connected ? 'Disconnect Feather' : 'Connect Feather (USB)';
+                const connected = await connectToLeonardo();
+                this.textContent = connected ? 'Disconnect Leonardo' : 'Connect Leonardo (USB)';
             }
         });
 

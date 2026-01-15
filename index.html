@@ -338,7 +338,11 @@
                 const byte2 = (durationMs >> 8) & 0xFF;
                 const data = new Uint8Array([byte1, byte2]);
                 
-                logDebug(`Sending: ${byte1.toString(16)} ${byte2.toString(16)}`);
+                // Better hex formatting
+                const hex1 = ('0' + byte1.toString(16)).slice(-2);
+                const hex2 = ('0' + byte2.toString(16)).slice(-2);
+                logDebug(`Sending: ${hex1} ${hex2}`);
+                logDebug(`Data bytes: [${byte1}, ${byte2}]`);
                 
                 await pumpCharacteristic.writeValue(data);
                 

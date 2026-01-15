@@ -296,9 +296,7 @@
                 logDebug("Requesting Bluetooth device...");
                 
                 bluetoothDevice = await navigator.bluetooth.requestDevice({
-                    filters: [
-                        { name: 'BLENano_Bo' }
-                    ],
+                    acceptAllDevices: true,
                     optionalServices: [0xA000]
                 });
                 

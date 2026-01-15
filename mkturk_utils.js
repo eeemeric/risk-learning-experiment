@@ -386,14 +386,14 @@ async function showOutcomeAndDeliverReward(rewardCount, position, loadedImages, 
         
         await playSingleRewardSound();
         
-        // Try Leonardo (USB Serial) first
-        if (typeof serialPort !== 'undefined' && serialPort !== null) {
-            logDebug(`Sending to Leonardo...`);
+        // Try Feather (BLE) first
+        if (typeof pumpCharacteristic !== 'undefined' && pumpCharacteristic !== null) {
+            logDebug(`Sending to Feather...`);
             await sendPumpCommand(pumpDuration);
         } 
-        // Then try BLE
+        // Then try BLE Nano
         else if (ble && ble.connected) {
-            logDebug(`Sending to BLE...`);
+            logDebug(`Sending to BLE Nano...`);
             await writepumpdurationtoBLE(pumpDuration);
         }
         else {

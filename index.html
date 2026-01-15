@@ -244,7 +244,7 @@
 
         <div style="background-color: #fff3e0; padding: 15px; margin: 15px 0; border-radius: 5px;">
             <button id="test-pump-btn" style="background-color: #FF9800;">Test Pump</button>
-            <button id="feather-connect-btn" style="background-color: #FF6B35;">Connect Leonardo (USB)</button>
+            <button id="feather-connect-btn" style="background-color: #FF6B35;">Connect Feather (BLE)</button>
             <button id="clear-token-btn" style="background-color: #f44336;">Clear Dropbox Token</button>
         </div>
 
@@ -281,76 +281,68 @@
         window.device = null;  // Feather USB device
     </script>
     
-    <!-- ========================================
-    WEBUSB - FEATHER 32u4 COMMUNICATION
-    ======================================== -->
+   
     <script>
-       // ========================================
-        // WEB SERIAL API - Leonardo Communication
         // ========================================
-
-        let serialPort = null;
-        let serialReader = null;
-        let keepReading = true;
-
-        async function connectToLeonardo() {
+        // WEB BLUETOOTH API - Feather nRF52840
+        // ========================================
+        
+        let bluetoothDevice = null;
+        let gattServer = null;
+        let pumpCharacteristic = null;
+        
+        async function connectToFeatherBLE() {
             try {
-                logDebug("Requesting serial port...");
-                serialPort = await navigator.serial.requestPort();
+                logDebug("Requesting Bluetooth device...");
                 
-                logDebug("Opening serial port...");
-                await serialPort.open({ baudRate: 57600 });
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                    filters: [
+                        { name: 'BLENano_Bo' }
+                    ],
+                    optionalServices: [0xA000]
+                });
                 
-                logDebug("Connected to Leonardo!");
-                document.getElementById('connection-status').innerHTML = '🟢 Leonardo Connected';
+                logDebug("Device selected, connecting...");
+                
+                gattServer = await bluetoothDevice.gatt.connect();
+                logDebug("GATT server connected");
+                
+                const service = await gattServer.getPrimaryService(0xA000);
+                logDebug("Service found");
+                
+                pumpCharacteristic = await service.getCharacteristic(0xA002);
+                logDebug("Pump characteristic found");
+                
+                logDebug("Connected to Feather!");
+                document.getElementById('connection-status').innerHTML = '🟢 Feather Connected';
                 document.getElementById('connection-status').style.color = 'green';
-                
-                // Start reading from serial
-                readFromSerial();
                 
                 return true;
             } catch (error) {
                 logDebug(`Connection error: ${error.message}`);
-                document.getElementById('connection-status').innerHTML = '🔴 Leonardo Not Found';
+                document.getElementById('connection-status').innerHTML = '🔴 Feather Not Found';
                 document.getElementById('connection-status').style.color = 'red';
                 return false;
             }
         }
-
-        async function readFromSerial() {
-            try {
-                const reader = serialPort.readable.getReader();
-                while (keepReading) {
-                    const { value, done } = await reader.read();
-                    if (done) break;
-                    
-                    const text = new TextDecoder().decode(value);
-                    logDebug(`Leonardo: ${text.trim()}`);
-                }
-                reader.releaseLock();
-            } catch (error) {
-                logDebug(`Serial read error: ${error.message}`);
-            }
-        }
-
+        
         async function sendPumpCommand(durationMs) {
             logDebug(`sendPumpCommand called: ${durationMs}ms`);
             
-            if (!serialPort || !serialPort.writable) {
-                logDebug('Leonardo not connected');
+            if (!pumpCharacteristic) {
+                logDebug('Feather not connected');
                 return false;
             }
             
             try {
-                const command = `{${durationMs}}`;
-                logDebug(`Sending: ${command}`);
+                // Create 2-byte array (little-endian)
+                const byte1 = durationMs & 0xFF;
+                const byte2 = (durationMs >> 8) & 0xFF;
+                const data = new Uint8Array([byte1, byte2]);
                 
-                const writer = serialPort.writable.getWriter();
-                const encoder = new TextEncoder();
-                const data = encoder.encode(command);
+                logDebug(`Sending: ${byte1.toString(16)} ${byte2.toString(16)}`);
                 
-                await writer.write(data);
-                writer.releaseLock();
+                await pumpCharacteristic.writeValue(data);
                 
                 logDebug(`✓ Pump command sent`);
                 return true;
@@ -359,22 +351,23 @@
                 return false;
             }
         }
-
-        async function disconnectLeonardo() {
-            if (serialPort) {
+        
+        async function disconnectFeather() {
+            if (bluetoothDevice) {
                 try {
-                    keepReading = false;
-                    await serialPort.close();
-                    serialPort = null;
-                    logDebug("Leonardo disconnected");
-                    document.getElementById('connection-status').innerHTML = '🔴 Leonardo Disconnected';
+                    bluetoothDevice.gatt.disconnect();
+                    bluetoothDevice = null;
+                    gattServer = null;
+                    pumpCharacteristic = null;
+                    logDebug("Feather disconnected");
+                    document.getElementById('connection-status').innerHTML = '🔴 Feather Disconnected';
                     document.getElementById('connection-status').style.color = 'red';
                 } catch (error) {
-                    logDebug(`Close error: ${error.message}`);
+                    logDebug(`Disconnect error: ${error.message}`);
                 }
             }
         }
-
+        
         async function testPumpCommand() {
             logDebug("Testing pump command...");
             await sendPumpCommand(100);
@@ -520,14 +513,14 @@
 
         document.getElementById('start-button').addEventListener('click', requestFullscreenThenStart);
 
-        // Leonardo Serial connection
+        // Feather Bluetooth connection
         document.getElementById('feather-connect-btn').addEventListener('click', async function() {
-            if (serialPort) {
-                await disconnectLeonardo();
-                this.textContent = 'Connect Leonardo (USB)';
+            if (bluetoothDevice) {
+                await disconnectFeather();
+                this.textContent = 'Connect Feather (BLE)';
             } else {
-                const connected = await connectToLeonardo();
-                this.textContent = connected ? 'Disconnect Leonardo' : 'Connect Leonardo (USB)';
+                const connected = await connectToFeatherBLE();
+                this.textContent = connected ? 'Disconnect Feather' : 'Connect Feather (BLE)';
             }
         });
 

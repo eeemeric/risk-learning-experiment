@@ -411,6 +411,7 @@ async function startExperiment() {
     
     const subjectSelect = document.getElementById('subject-select');
     subjectName = subjectSelect.value;
+    console.log('Subject name: ${subjectName}');
     
     if (!subjectName) {
         alert('Please select a subject first!');

@@ -354,7 +354,14 @@ async function runPump(str){
 
 async function showOutcomeAndDeliverReward(rewardCount, position, loadedImages, params, ble) {
     logDebug(`showOutcomeAndDeliverReward: ${rewardCount} rewards`);
-    
+    // Skip pump if testing (no device connected)
+    if (typeof pumpCharacteristic === 'undefined' || pumpCharacteristic === null) {
+        if (!ble || !ble.connected) {
+            logDebug(`No pump device connected - skipping pump`);
+            // Continue without pump
+        }
+    }
+  
     // Immediately hide all stimuli
     const container = document.getElementById('experiment-container');
     const stimuli = container.querySelectorAll('.stimulus');
@@ -386,29 +393,30 @@ async function showOutcomeAndDeliverReward(rewardCount, position, loadedImages, 
         
         await playSingleRewardSound();
         
-        // Try Feather (BLE) first
-        if (typeof pumpCharacteristic !== 'undefined' && pumpCharacteristic !== null) {
-            logDebug(`Sending to Feather...`);
-            await sendPumpCommand(pumpDuration);
-        } 
-        // Then try BLE Nano
-        else if (ble && ble.connected) {
-            logDebug(`Sending to BLE Nano...`);
-            await writepumpdurationtoBLE(pumpDuration);
-        }
-        else {
-            logDebug(`No device connected`);
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 200));
-    }
-    
-    if (outcomeStimulus) {
-        hideStimulus(outcomeStimulus);
-    }
-    
-    logDebug(`Reward delivery complete`);
-}
+       // Try Feather (BLE) first
+      if (typeof pumpCharacteristic !== 'undefined' && pumpCharacteristic !== null) {
+          logDebug(`Sending to Feather...`);
+          try {
+              await Promise.race([
+                  sendPumpCommand(pumpDuration),
+                  new Promise((_, reject) => setTimeout(() => reject(new Error('Pump timeout')), 5000))
+              ]);
+          } catch (error) {
+              logDebug(`Feather error: ${error.message}`);
+          }
+      } 
+      // Then try BLE Nano
+      else if (ble && ble.connected) {
+          logDebug(`Sending to BLE Nano...`);
+          try {
+              await writepumpdurationtoBLE(pumpDuration);
+          } catch (error) {
+              logDebug(`BLE error: ${error.message}`);
+          }
+      }
+      else {
+          logDebug(`No device connected`);
+      }
 
 function timeout(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));

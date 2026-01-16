@@ -354,14 +354,7 @@ async function runPump(str){
 
 async function showOutcomeAndDeliverReward(rewardCount, position, loadedImages, params, ble) {
     logDebug(`showOutcomeAndDeliverReward: ${rewardCount} rewards`);
-    // Skip pump if testing (no device connected)
-    if (typeof pumpCharacteristic === 'undefined' || pumpCharacteristic === null) {
-        if (!ble || !ble.connected) {
-            logDebug(`No pump device connected - skipping pump`);
-            // Continue without pump
-        }
-    }
-  
+    
     // Immediately hide all stimuli
     const container = document.getElementById('experiment-container');
     const stimuli = container.querySelectorAll('.stimulus');
@@ -370,8 +363,11 @@ async function showOutcomeAndDeliverReward(rewardCount, position, loadedImages, 
         stimulus.style.display = 'none';
     });
     
+    logDebug(`Stimuli hidden`);
+    
     // Wait to avoid flash
     await new Promise(resolve => setTimeout(resolve, 200));
+    logDebug(`Wait complete`);
     
     const sureFilename = `sure${rewardCount}.png`;
     const sureStimulus = loadedImages.sure.find(img => 
@@ -382,6 +378,7 @@ async function showOutcomeAndDeliverReward(rewardCount, position, loadedImages, 
     
     if (sureStimulus) {
         outcomeStimulus = showStimulus(sureStimulus.image, position);
+        logDebug(`Outcome stimulus shown`);
     }
     
     const pumpDuration = params.PumpDuration || 100;
@@ -392,31 +389,35 @@ async function showOutcomeAndDeliverReward(rewardCount, position, loadedImages, 
         logDebug(`Reward ${i + 1}/${rewardCount}`);
         
         await playSingleRewardSound();
+        logDebug(`Sound played`);
         
-       // Try Feather (BLE) first
-      if (typeof pumpCharacteristic !== 'undefined' && pumpCharacteristic !== null) {
-          logDebug(`Sending to Feather...`);
-          try {
-              await Promise.race([
-                  sendPumpCommand(pumpDuration),
-                  new Promise((_, reject) => setTimeout(() => reject(new Error('Pump timeout')), 5000))
-              ]);
-          } catch (error) {
-              logDebug(`Feather error: ${error.message}`);
-          }
-      } 
-      // Then try BLE Nano
-      else if (ble && ble.connected) {
-          logDebug(`Sending to BLE Nano...`);
-          try {
-              await writepumpdurationtoBLE(pumpDuration);
-          } catch (error) {
-              logDebug(`BLE error: ${error.message}`);
-          }
-      }
-      else {
-          logDebug(`No device connected`);
-      }
+        // Try Feather (BLE) first
+        if (typeof pumpCharacteristic !== 'undefined' && pumpCharacteristic !== null) {
+            logDebug(`Sending to Feather...`);
+            await sendPumpCommand(pumpDuration);
+            logDebug(`Feather command sent`);
+        } 
+        // Then try BLE Nano
+        else if (ble && ble.connected) {
+            logDebug(`Sending to BLE Nano...`);
+            await writepumpdurationtoBLE(pumpDuration);
+            logDebug(`BLE command sent`);
+        }
+        else {
+            logDebug(`No device connected`);
+        }
+        
+        logDebug(`Waiting 200ms before next reward...`);
+        await new Promise(resolve => setTimeout(resolve, 200));
+        logDebug(`Inter-reward wait complete`);
+    }
+    
+    if (outcomeStimulus) {
+        hideStimulus(outcomeStimulus);
+    }
+    
+    logDebug(`Reward delivery complete`);
+}
 
 function timeout(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));

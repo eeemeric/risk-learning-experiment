@@ -387,8 +387,10 @@
         function logDebug(message) {
             console.log(message);
             const debugDiv = document.getElementById('debug-output');
-            debugDiv.innerHTML += message + '<br>';
-            debugDiv.style.display = 'block';
+            if (debugDiv) {
+                debugDiv.innerHTML += message + '<br>';
+                debugDiv.style.display = 'block';
+            }
         }
         
         logDebug("Debug logger initialized!");

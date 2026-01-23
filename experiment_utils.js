@@ -129,13 +129,11 @@ async function showOutcomeAndDeliverReward(rewardCount, position, loadedImages, 
         
         window.logDebug(`Checking for pump device...`);
         
-        // Try Feather (BLE) first
         if (typeof pumpCharacteristic !== 'undefined' && pumpCharacteristic !== null) {
             window.logDebug(`Sending to Feather...`);
             await sendPumpCommand(pumpDuration);
             window.logDebug(`Feather command complete`);
         } 
-        // Then try BLE Nano
         else if (ble && ble.connected) {
             window.logDebug(`Sending to BLE Nano...`);
             await writepumpdurationtoBLE(pumpDuration);

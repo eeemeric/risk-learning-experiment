@@ -66,6 +66,8 @@ async function playSingleRewardSound() {
 }
 
 async function showOutcomeAndDeliverReward(rewardCount, position, loadedImages, params, ble) {
+    logDebug(`showOutcomeAndDeliverReward START: ${rewardCount} rewards`);
+    
     // Immediately hide all stimuli
     const container = document.getElementById('experiment-container');
     const stimuli = container.querySelectorAll('.stimulus');
@@ -74,57 +76,68 @@ async function showOutcomeAndDeliverReward(rewardCount, position, loadedImages, 
         stimulus.style.display = 'none';
     });
     
+    logDebug(`Stimuli hidden`);
+    
     // Wait to avoid flash
     await new Promise(resolve => setTimeout(resolve, 200));
+    logDebug(`Wait 200ms complete`);
     
     const sureFilename = `sure${rewardCount}.png`;
+    logDebug(`Looking for: ${sureFilename}`);
+    
     const sureStimulus = loadedImages.sure.find(img => 
         img.path.toLowerCase().endsWith(sureFilename)
     );
+    
+    logDebug(`Sure stimulus found: ${sureStimulus ? 'yes' : 'no'}`);
     
     let outcomeStimulus = null;
     
     if (sureStimulus) {
         outcomeStimulus = showStimulus(sureStimulus.image, position);
+        logDebug(`Outcome stimulus shown`);
     }
     
     const pumpDuration = params.PumpDuration || 100;
+    logDebug(`Pump duration: ${pumpDuration}ms`);
     
-    console.log("Delivering " + rewardCount + " rewards");
+    logDebug(`Starting reward loop: ${rewardCount} rewards`);
     
     for (let i = 0; i < rewardCount; i++) {
-        console.log("Reward " + (i + 1) + " of " + rewardCount);
+        logDebug(`Reward ${i + 1}/${rewardCount} - playing sound`);
         
         await playSingleRewardSound();
+        logDebug(`Sound played`);
         
-        if (ble.connected) {
+        logDebug(`Checking for pump device...`);
+        
+        // Try Feather (BLE) first
+        if (typeof pumpCharacteristic !== 'undefined' && pumpCharacteristic !== null) {
+            logDebug(`Sending to Feather...`);
+            await sendPumpCommand(pumpDuration);
+            logDebug(`Feather command complete`);
+        } 
+        // Then try BLE Nano
+        else if (ble && ble.connected) {
+            logDebug(`Sending to BLE Nano...`);
             await writepumpdurationtoBLE(pumpDuration);
+            logDebug(`BLE command complete`);
+        }
+        else {
+            logDebug(`No pump device connected`);
         }
         
+        logDebug(`Waiting 200ms...`);
         await new Promise(resolve => setTimeout(resolve, 200));
+        logDebug(`Inter-reward wait complete`);
     }
     
     if (outcomeStimulus) {
         hideStimulus(outcomeStimulus);
+        logDebug(`Outcome stimulus hidden`);
     }
     
-    for (let i = 0; i < rewardCount; i++) {
-        console.log("Reward " + (i + 1) + " of " + rewardCount);
-        
-        await playSingleRewardSound();
-        
-        // Try BLE first
-        if (ble && ble.connected) {
-            await writepumpdurationtoBLE(pumpDuration);
-        } 
-        // Then try USB Serial
-        else if (serialPort) {
-            await sendPumpCommand(pumpDuration);
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 200));
-    }
-    
+    logDebug(`showOutcomeAndDeliverReward COMPLETE`);
 }
 
 // ========================================

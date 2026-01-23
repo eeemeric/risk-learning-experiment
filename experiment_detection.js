@@ -189,6 +189,7 @@ async function loadSubjectParameters(subject) {
         
         // Online - load from Dropbox
         const paramPath = `/mkturkfolders/parameterfiles/subjects/${subject}_params.txt`;
+        console.log("Trying to load from:", paramPath);
         const response = await dbx.filesDownload({ path: paramPath });
         const blob = response.result.fileBlob;
         const text = await blob.text();

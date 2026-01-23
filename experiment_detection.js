@@ -330,19 +330,26 @@ async function runTrial() {
         stimulusData.path
     );
     logDebug(`Response received: correct=${response.correct}`);
-    
+
+    // Determine reward
+    logDebug(`Determining reward...`);
     let rewardResult = { rewardCount: 0, outcome: 'none' };
     
+    // Process response
     if (response.correct) {
         console.log('Correct response!');
         
         rewardResult = determineRewardCount(stimulusData.path, stimulusData.type);
-        
+        logDebug(`Reward determined: ${rewardResult.rewardCount}`);
+
+        logDebug(`Calling showOutcomeAndDeliverReward...`);
         await showOutcomeAndDeliverReward(rewardResult.rewardCount, response.position, loadedImages, params, ble);
+        logDebug(`showOutcomeAndDeliverReward returned`);
     } else {
+        logDebug(`Incorrect response or timeout`);
         console.log('Incorrect response or timeout');
     }
-    
+    logDebug(`Saving trial data...`);
     experimentData.push({
         trial: currentTrial + 1,
         block: currentBlock,

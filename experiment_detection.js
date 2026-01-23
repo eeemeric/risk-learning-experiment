@@ -316,16 +316,20 @@ async function presentSingleStimulus(image, imagePath) {
 
 async function runTrial() {
     console.log(`Starting trial ${currentTrial + 1} (Block ${currentBlock}, Trial ${trialWithinBlock + 1} of ${totalTrials})`);
+    logDebug(`Trial ${currentTrial + 1} starting`);
     
     const stimulusIndex = trialOrder[trialWithinBlock];
-    const stimulusData = getStimulusAtIndex(stimulusIndex);
+    logDebug(`Stimulus index: ${stimulusIndex}`);
     
+    const stimulusData = getStimulusAtIndex(stimulusIndex);
     console.log(`Presenting: ${stimulusData.path} (${stimulusData.type})`);
+    logDebug(`Stimulus: ${stimulusData.path}`);
     
     const response = await presentSingleStimulus(
         stimulusData.image, 
         stimulusData.path
     );
+    logDebug(`Response received: correct=${response.correct}`);
     
     let rewardResult = { rewardCount: 0, outcome: 'none' };
     

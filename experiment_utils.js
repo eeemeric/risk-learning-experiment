@@ -5,6 +5,13 @@
 
 console.log("EXPERIMENT_UTILS.JS LOADED - VERSION 42 - " + new Date());
 
+// Make sure logDebug is available
+if (typeof logDebug === 'undefined') {
+    window.logDebug = function(message) {
+        console.log(message);
+    };
+}
+
 // ========================================
 // STIMULUS DISPLAY FUNCTIONS
 // ========================================

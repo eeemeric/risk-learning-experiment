@@ -15,6 +15,8 @@ let loadedImages = { sure: [], gamble: [] };
 let trialOrder = [];
 let currentBlock = 1;
 let trialWithinBlock = 0;
+// BLE device reference (from mkturk_bluetooth.js)
+let ble = null;
 
 // ========================================
 // LOAD ASSETS FROM DROPBOX

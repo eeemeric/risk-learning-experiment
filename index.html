@@ -196,6 +196,7 @@
             z-index: 10000;
             display: none;
         }
+        
     </style>
 </head>
 <body>
@@ -266,7 +267,8 @@
     </div>
 
     <!-- Debug output display -->
-    <div id="debug-output"></div>
+    <div id="debug-output" style="position: fixed; top: 50px; right: 10px; background: black; color: lime; padding: 10px; font-size: 10px; max-width: 250px; max-height: 200px; overflow-y: auto; border: 1px solid lime; z-index: 10000; display: block;">
+    </div>
 
     <!-- Debug Log -->
     <div id="debug-log">DEBUG LOG:<br></div>
@@ -442,6 +444,15 @@
 
         window.addEventListener('load', function() {
             initializeDropbox();
+        });
+        // Check Dropbox token on startup
+        window.addEventListener('load', function() {
+            const token = localStorage.getItem('dropbox_access_token');
+            if (token) {
+                logDebug(`Token found: ${token.substring(0, 20)}...`);
+            } else {
+                logDebug(`No token in localStorage`);
+            }
         });
     </script>
 

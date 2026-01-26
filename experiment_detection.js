@@ -423,6 +423,16 @@ function determineRewardCount(imagePath, stimulusType) {
 async function startExperiment() {
     console.log('Starting Detection Experiment...');
     
+    // Check token first
+    const token = localStorage.getItem('dropbox_access_token');
+    if (token) {
+        logDebug(`Token found: ${token.substring(0, 20)}...`);
+    } else {
+        logDebug(`NO TOKEN IN LOCALSTORAGE`);
+        alert('No Dropbox token found. Please refresh and authorize.');
+        return;
+    }
+    
     const subjectSelect = document.getElementById('subject-select');
     subjectName = subjectSelect.value;
     console.log(`Subject name: ${subjectName}`);

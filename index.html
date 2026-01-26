@@ -441,12 +441,9 @@
                 logDebug("Audio context initialized");
             }
         }
-
+        
         window.addEventListener('load', function() {
-            initializeDropbox();
-        });
-        // Check Dropbox token on startup
-        window.addEventListener('load', function() {
+            // Check Dropbox token on startup
             const token = localStorage.getItem('dropbox_access_token');
             if (token) {
                 logDebug(`Token found: ${token.substring(0, 20)}...`);
@@ -456,7 +453,7 @@
             
             initializeDropbox();
         });
-    </script>
+        </script>
 
     <!-- Load shared utilities -->
     <script src="experiment_utils.js?v=42"></script>

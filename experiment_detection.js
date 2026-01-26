@@ -171,6 +171,7 @@ function getStimulusAtIndex(index) {
 
 async function loadSubjectParameters(subject) {
     console.log("Loading parameters for subject: " + subject);
+    logDebug("Loading parameters for subject: " + subject);
     
     try {
         // Try cache first
@@ -180,8 +181,7 @@ async function loadSubjectParameters(subject) {
             if (cached) {
                 params = cached;
                 console.log("Parameters loaded from cache");
-                document.getElementById('subject-status').innerHTML = 'Parameters (cached)';
-                document.getElementById('subject-status').style.color = 'orange';
+                logDebug("Parameters loaded from cache");
                 return true;
             } else {
                 alert("No cached parameters for this subject. Please connect to internet first.");
@@ -190,9 +190,12 @@ async function loadSubjectParameters(subject) {
         }
         
         // Online - load from Dropbox
-        const paramPath = `/mkturkfolders/parameterfiles/subjects/${subject}_params.txt`;
-        console.log("Trying to load from:", paramPath);
+        const paramPath = `/mkturkfolders/parameterfiles/${subject}_params.txt`;
+        logDebug(`Attempting to load: ${paramPath}`);
+        
         const response = await dbx.filesDownload({ path: paramPath });
+        logDebug(`File download successful`);
+        
         const blob = response.result.fileBlob;
         const text = await blob.text();
         params = JSON.parse(text);
@@ -201,14 +204,12 @@ async function loadSubjectParameters(subject) {
         cacheParameters(subject, params);
         
         console.log("Parameters loaded:", params);
-        document.getElementById('subject-status').innerHTML = 'Parameters loaded!';
-        document.getElementById('subject-status').style.color = 'green';
+        logDebug("Parameters loaded successfully!");
         return true;
         
     } catch (error) {
+        logDebug(`Error loading parameters: ${error.message}`);
         console.error("Error loading parameters:", error);
-        document.getElementById('subject-status').innerHTML = 'Failed to load parameters!';
-        document.getElementById('subject-status').style.color = 'red';
         return false;
     }
 }

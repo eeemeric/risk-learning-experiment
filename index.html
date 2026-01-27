@@ -365,7 +365,7 @@
             const debugDiv = document.getElementById('debug-output');
             if (debugDiv) {
                 debugDiv.innerHTML += message + '<br>';
-                debugDiv.style.display = 'block';
+                // Don't force display - let CSS control it
             }
         }
         

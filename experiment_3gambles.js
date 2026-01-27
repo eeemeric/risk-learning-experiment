@@ -466,7 +466,10 @@ async function startExperiment() {
     fullscreenPromise.catch(err => {
         console.error('Fullscreen error:', err);
     });
-    
+
+    // Hide launch screen elements
+    document.getElementById('connection-status').style.display = 'none';
+    document.getElementById('toggle-debug-btn').style.display = 'none';
     runTrial();
 }
 
@@ -479,4 +482,7 @@ async function endExperiment() {
     
     // Exit fullscreen
     exitFullscreen();
+    // Show launch screen elements again
+    document.getElementById('connection-status').style.display = 'block';
+    document.getElementById('toggle-debug-btn').style.display = 'block';
 }

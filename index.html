@@ -491,16 +491,15 @@
         }
 
         document.getElementById('start-button').addEventListener('click', async function() {
-            // Auto-connect Feather before starting
+            // Auto-connect Feather (don't wait for it to complete)
             if (!bluetoothDevice) {
                 logDebug("Auto-connecting to Feather...");
-                const connected = await connectToFeatherBLE();
-                if (!connected) {
-                    logDebug("Warning: Feather not connected. Continuing anyway...");
-                }
+                connectToFeatherBLE().catch(err => {
+                    logDebug("Feather connection failed, continuing anyway");
+                });
             }
             
-            // Then start experiment
+            // Start fullscreen immediately
             requestFullscreenThenStart();
         });
     </script>

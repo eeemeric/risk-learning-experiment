@@ -149,6 +149,7 @@
             color: white;
             padding: 8px 12px;
             font-size: 12px;
+            margin: 0;
         }
 
         #connection-status {
@@ -165,7 +166,6 @@
         }
 
         #debug-log {
-            display: none;
             position: fixed;
             bottom: 0;
             left: 0;
@@ -189,25 +189,24 @@
             color: lime;
             padding: 10px;
             font-size: 10px;
-            max-width: 200px;
-            max-height: 150px;
+            max-width: 250px;
+            max-height: 200px;
             overflow-y: auto;
             border: 1px solid lime;
             z-index: 10000;
-            display: none;
+            display: block;
         }
-        
     </style>
 </head>
 <body>
     <!-- Connection Status Indicator -->
-    <div id="connection-status" style="position: fixed; top: 10px; right: 10px; z-index: 10001; padding: 8px 12px; background: #333; color: green; border-radius: 4px; font-size: 12px; font-weight: bold;">
+    <div id="connection-status">
         🟢 Online
     </div>
 
     <!-- Instructions Screen -->
     <div id="instructions">
-        <h1>Risk Learning Experiment v42</h1>
+        <h1>Risk Learning Experiment</h1>
         <p>In this experiment, you will see different options appear on screen.</p>
         <p>Click on the option you prefer when it appears.</p>
         <p>You will hear reward sounds based on your choices.</p>
@@ -234,23 +233,7 @@
             </select>
         </div>
 
-        <div style="background-color: #f3e5f5; padding: 15px; margin: 15px 0; border-radius: 5px;">
-            <label for="ble-device-select"><strong>Select BLE Device:</strong></label>
-            <select id="ble-device-select">
-                <option value="BLENano_Bo">BLENano_Bo</option>
-            </select>
-            <button id="connect-ble-btn">Connect Bluetooth</button>
-            <span id="ble-status">Not connected</span>
-        </div>
-
-        <div style="background-color: #fff3e0; padding: 15px; margin: 15px 0; border-radius: 5px;">
-            <button id="test-pump-btn" style="background-color: #FF9800;">Test Pump</button>
-            <button id="feather-connect-btn" style="background-color: #FF6B35;">Connect Feather (BLE)</button>
-            <button id="clear-token-btn" style="background-color: #f44336;">Clear Dropbox Token</button>
-        </div>
-
         <div style="text-align: center; margin-top: 20px;">
-            <button id="fullscreen-btn" style="background-color: #2196F3;">Enter Fullscreen</button>
             <button id="start-button" style="background-color: #4CAF50; font-size: 18px; padding: 20px 40px;">Start Experiment</button>
         </div>
     </div>
@@ -267,15 +250,11 @@
     </div>
 
     <!-- Debug output display -->
-    <div id="debug-output" style="position: fixed; top: 50px; right: 10px; background: black; color: lime; padding: 10px; font-size: 10px; max-width: 250px; max-height: 200px; overflow-y: auto; border: 1px solid lime; z-index: 10000; display: block;">
-    </div>
+    <div id="debug-output"></div>
 
     <!-- Debug Log -->
     <div id="debug-log">DEBUG LOG:<br></div>
 
-    <div id="subject-status" style="margin-top: 10px; padding: 10px; border-radius: 5px; background-color: #f0f0f0;">
-        Status: Ready
-    </div>
     <!-- Toggle Debug Button -->
     <button id="toggle-debug-btn">Show Debug</button>
 
@@ -284,24 +263,24 @@
          ======================================== -->
     <script>
         window.device = null;  // Feather USB device
+        let bluetoothDevice = null;  // Feather BLE device
     </script>
-    
-   
+
+    <!-- ========================================
+         WEB BLUETOOTH API - FEATHER nRF52840
+         ======================================== -->
     <script>
-        // ========================================
-        // WEB BLUETOOTH API - Feather nRF52840
-        // ========================================
-        
-        let bluetoothDevice = null;
         let gattServer = null;
         let pumpCharacteristic = null;
-        
+
         async function connectToFeatherBLE() {
             try {
                 logDebug("Requesting Bluetooth device...");
                 
                 bluetoothDevice = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
+                    filters: [
+                        { name: 'BLENano_Bo' }
+                    ],
                     optionalServices: [0xA000]
                 });
                 
@@ -328,7 +307,7 @@
                 return false;
             }
         }
-        
+
         async function sendPumpCommand(durationMs) {
             logDebug(`sendPumpCommand called: ${durationMs}ms`);
             
@@ -347,7 +326,6 @@
                 const hex1 = ('0' + byte1.toString(16)).slice(-2);
                 const hex2 = ('0' + byte2.toString(16)).slice(-2);
                 logDebug(`Sending: ${hex1} ${hex2}`);
-                logDebug(`Data bytes: [${byte1}, ${byte2}]`);
                 
                 await pumpCharacteristic.writeValue(data);
                 
@@ -358,7 +336,7 @@
                 return false;
             }
         }
-        
+
         async function disconnectFeather() {
             if (bluetoothDevice) {
                 try {
@@ -373,12 +351,6 @@
                     logDebug(`Disconnect error: ${error.message}`);
                 }
             }
-        }
-        
-        async function testPumpCommand() {
-            logDebug("Testing pump command...");
-            await sendPumpCommand(100);
-            logDebug("Test complete - check if pump triggered");
         }
     </script>
 
@@ -399,10 +371,10 @@
     </script>
 
     <!-- Load MKTurk framework files -->
-    <script src="mkturk_utils.js"></script>
     <script src="mkturk_installsettings.js"></script>
     <script src="mkturk_globalvariables.js"></script>
     <script src="mkturk_dropbox.js"></script>
+    <script src="mkturk_utils.js"></script>
     <script src="mkturk_ImageBuffer.js"></script>
     <script src="mkturk_offline.js"></script>
 
@@ -441,7 +413,7 @@
                 logDebug("Audio context initialized");
             }
         }
-        
+
         window.addEventListener('load', function() {
             // Check Dropbox token on startup
             const token = localStorage.getItem('dropbox_access_token');
@@ -453,7 +425,7 @@
             
             initializeDropbox();
         });
-        </script>
+    </script>
 
     <!-- Load shared utilities -->
     <script src="experiment_utils.js?v=42"></script>
@@ -496,19 +468,7 @@
             this.textContent = isHidden ? 'Hide Debug' : 'Show Debug';
         });
 
-        // Fullscreen functionality
-        document.getElementById('fullscreen-btn').addEventListener('click', function() {
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen();
-            } else if (elem.webkitRequestFullscreen) {
-                elem.webkitRequestFullscreen();
-            } else if (elem.msRequestFullscreen) {
-                elem.msRequestFullscreen();
-            }
-        });
-
-        // Start experiment with fullscreen
+        // Start experiment with fullscreen and auto-connect Feather
         function requestFullscreenThenStart() {
             const elem = document.documentElement;
             
@@ -528,26 +488,18 @@
                 });
         }
 
-        document.getElementById('start-button').addEventListener('click', requestFullscreenThenStart);
-
-        // Feather Bluetooth connection
-        document.getElementById('feather-connect-btn').addEventListener('click', async function() {
-            if (bluetoothDevice) {
-                await disconnectFeather();
-                this.textContent = 'Connect Feather (BLE)';
-            } else {
+        document.getElementById('start-button').addEventListener('click', async function() {
+            // Auto-connect Feather before starting
+            if (!bluetoothDevice) {
+                logDebug("Auto-connecting to Feather...");
                 const connected = await connectToFeatherBLE();
-                this.textContent = connected ? 'Disconnect Feather' : 'Connect Feather (BLE)';
+                if (!connected) {
+                    logDebug("Warning: Feather not connected. Continuing anyway...");
+                }
             }
-        });
-
-        // Test pump button
-        document.getElementById('test-pump-btn').addEventListener('click', testPumpCommand);
-
-        // Clear token button
-        document.getElementById('clear-token-btn').addEventListener('click', function() {
-            localStorage.removeItem('dropbox_access_token');
-            alert('Dropbox token cleared. Refresh the page to re-authorize.');
+            
+            // Then start experiment
+            requestFullscreenThenStart();
         });
     </script>
 </body>

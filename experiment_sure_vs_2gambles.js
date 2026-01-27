@@ -405,3 +405,69 @@ async function runTrial() {
         chosenType: response.chosenType,
         gambleOutcome: gambleOutcome?.outcome || null,
         rewardDelivered: rewardAmount,
+
+    // ========================================
+    // EXPERIMENT INITIALIZATION
+    // ========================================
+    
+    async function startExperiment() {
+        console.log('Starting Sure vs 2 Gambles Experiment...');
+        
+        // Check token first
+        const token = localStorage.getItem('dropbox_access_token');
+        if (token) {
+            logDebug(`Token found: ${token.substring(0, 20)}...`);
+        } else {
+            logDebug(`NO TOKEN IN LOCALSTORAGE`);
+            alert('No Dropbox token found. Please refresh and authorize.');
+            return;
+        }
+        
+        const subjectSelect = document.getElementById('subject-select');
+        subjectName = subjectSelect.value;
+        
+        if (!subjectName) {
+            alert('Please select a subject first!');
+            return;
+        }
+        
+        logDebug('Loading parameters...');
+        const paramsLoaded = await loadSubjectParameters(subjectName);
+        if (!paramsLoaded) {
+            alert('Failed to load subject parameters.');
+            return;
+        }
+        
+        logDebug('Initializing audio...');
+        initializeAudio();
+        
+        logDebug('Loading assets...');
+        await loadAssetsFromDropbox();
+        
+        // Hide launch screen elements
+        document.getElementById('connection-status').style.display = 'none';
+        document.getElementById('toggle-debug-btn').style.display = 'none';
+        
+        logDebug(`Experiment ready: ${totalTrials} trial combinations per block`);
+        
+        document.getElementById('instructions').style.display = 'none';
+        document.getElementById('experiment-container').style.display = 'block';
+        document.body.classList.add('experiment-running');
+        
+        logDebug('Requesting fullscreen...');
+        const elem = document.documentElement;
+        const fullscreenPromise = elem.requestFullscreen ? elem.requestFullscreen() 
+            : elem.webkitRequestFullscreen ? elem.webkitRequestFullscreen()
+            : elem.msRequestFullscreen ? elem.msRequestFullscreen()
+            : Promise.reject('Fullscreen not supported');
+    
+        fullscreenPromise
+            .then(() => {
+                logDebug('Entered fullscreen');
+                runTrial();
+            })
+            .catch(err => {
+                logDebug('Fullscreen failed, starting anyway');
+                runTrial();
+            });
+    }

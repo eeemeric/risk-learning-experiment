@@ -230,6 +230,8 @@
                 <option value="">-- Select Subject --</option>
                 <option value="RiskLearningSubject">RiskLearningSubject</option>
                 <option value="NewSubject">NewSubject</option>
+                <option value="NewSubject">Orc</option>
+                <option value="NewSubject">Nerdenel</option>
             </select>
         </div>
 
@@ -413,6 +415,13 @@
             if (!audiocontext) {
                 audiocontext = new (window.AudioContext || window.webkitAudioContext)();
                 logDebug("Audio context initialized");
+            }
+            
+            // Resume audio context (required on mobile)
+            if (audiocontext.state === 'suspended') {
+                audiocontext.resume().then(() => {
+                    logDebug("Audio context resumed");
+                });
             }
         }
 

@@ -1,3 +1,15 @@
+// Ensure logDebug is available globally
+if (typeof window.logDebug === 'undefined') {
+    window.logDebug = function(message) {
+        console.log(message);
+        const debugDiv = document.getElementById('debug-output');
+        if (debugDiv) {
+            debugDiv.innerHTML += message + '<br>';
+            debugDiv.style.display = 'block';
+        }
+    };
+}
+
 (function(window){
   window.utils = {
     parseQueryString: function(str) {
@@ -377,7 +389,7 @@ async function runPump(str){
 }
 
 async function showOutcomeAndDeliverReward(rewardCount, position, loadedImages, params, ble) {
-    logDebug(`showOutcomeAndDeliverReward: ${rewardCount} rewards`);
+    window.logDebug(`showOutcomeAndDeliverReward: ${rewardCount} rewards`);
     
     // Immediately hide all stimuli
     const container = document.getElementById('experiment-container');
@@ -387,11 +399,11 @@ async function showOutcomeAndDeliverReward(rewardCount, position, loadedImages, 
         stimulus.style.display = 'none';
     });
     
-    logDebug(`Stimuli hidden`);
+    window.logDebug(`Stimuli hidden`);
     
     // Wait to avoid flash
     await new Promise(resolve => setTimeout(resolve, 200));
-    logDebug(`Wait complete`);
+    window.logDebug(`Wait complete`);
     
     const sureFilename = `sure${rewardCount}.png`;
     const sureStimulus = loadedImages.sure.find(img => 
@@ -402,45 +414,45 @@ async function showOutcomeAndDeliverReward(rewardCount, position, loadedImages, 
     
     if (sureStimulus) {
         outcomeStimulus = showStimulus(sureStimulus.image, position);
-        logDebug(`Outcome stimulus shown`);
+        window.logDebug(`Outcome stimulus shown`);
     }
     
     const pumpDuration = params.PumpDuration || 100;
     
-    logDebug(`Delivering ${rewardCount} rewards, pump duration: ${pumpDuration}ms`);
+    window.logDebug(`Delivering ${rewardCount} rewards, pump duration: ${pumpDuration}ms`);
     
     for (let i = 0; i < rewardCount; i++) {
-        logDebug(`Reward ${i + 1}/${rewardCount}`);
+        window.logDebug(`Reward ${i + 1}/${rewardCount}`);
         
         await playSingleRewardSound();
-        logDebug(`Sound played`);
+        window.logDebug(`Sound played`);
         
         // Try Feather (BLE) first
         if (typeof pumpCharacteristic !== 'undefined' && pumpCharacteristic !== null) {
-            logDebug(`Sending to Feather...`);
+            window.logDebug(`Sending to Feather...`);
             await sendPumpCommand(pumpDuration);
-            logDebug(`Feather command sent`);
+            window.logDebug(`Feather command sent`);
         } 
         // Then try BLE Nano
         else if (ble && ble.connected) {
-            logDebug(`Sending to BLE Nano...`);
+            window.logDebug(`Sending to BLE Nano...`);
             await writepumpdurationtoBLE(pumpDuration);
-            logDebug(`BLE command sent`);
+            window.logDebug(`BLE command sent`);
         }
         else {
-            logDebug(`No device connected`);
+            window.logDebug(`No device connected`);
         }
         
-        logDebug(`Waiting 500ms before next reward...`);
+        window.logDebug(`Waiting 500ms before next reward...`);
         await new Promise(resolve => setTimeout(resolve, 500));
-        logDebug(`Inter-reward wait complete`);
+        window.logDebug(`Inter-reward wait complete`);
     }
     
     if (outcomeStimulus) {
         hideStimulus(outcomeStimulus);
     }
     
-    logDebug(`Reward delivery complete`);
+    window.logDebug(`Reward delivery complete`);
 }
 
 function timeout(ms) {

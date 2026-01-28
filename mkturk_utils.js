@@ -407,8 +407,8 @@ async function showOutcomeAndDeliverReward(rewardCount, position, loadedImages, 
             logDebug(`No device connected`);
         }
         
-        logDebug(`Waiting 200ms before next reward...`);
-        await new Promise(resolve => setTimeout(resolve, 200));
+        logDebug(`Waiting 400ms before next reward...`);
+        await new Promise(resolve => setTimeout(resolve, 400));
         logDebug(`Inter-reward wait complete`);
     }
     

@@ -181,6 +181,30 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+async function playSingleRewardSound() {
+    try {
+        // Make sure audio context is running
+        if (audiocontext && audiocontext.state === 'suspended') {
+            await audiocontext.resume();
+        }
+        
+        // Play reward sound
+        if (sounds && sounds.buffer && sounds.buffer[0]) {
+            const source = audiocontext.createBufferSource();
+            source.buffer = sounds.buffer[0];
+            source.connect(audiocontext.destination);
+            source.start(0);
+            
+            // Wait for sound to finish (approximate duration)
+            await new Promise(resolve => setTimeout(resolve, 300));
+        } else {
+            console.log("No sound buffer loaded");
+        }
+    } catch (error) {
+        console.error("Error playing sound:", error);
+    }
+}
+
 
 // Async: play sound
 async function playSound(idx){
@@ -422,3 +446,4 @@ async function showOutcomeAndDeliverReward(rewardCount, position, loadedImages, 
 function timeout(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+

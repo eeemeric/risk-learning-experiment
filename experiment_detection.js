@@ -422,7 +422,8 @@ function determineRewardCount(imagePath, stimulusType) {
 // ========================================
 
 async function startExperiment() {
-    console.log('Starting Detection Experiment...');
+    console.log('Starting Experiment...');
+    logDebug('Starting Experiment...');
     
     // Check token first
     const token = localStorage.getItem('dropbox_access_token');
@@ -436,44 +437,54 @@ async function startExperiment() {
     
     const subjectSelect = document.getElementById('subject-select');
     subjectName = subjectSelect.value;
-    console.log(`Subject name: ${subjectName}`);
     
     if (!subjectName) {
         alert('Please select a subject first!');
         return;
     }
     
+    logDebug('Loading parameters...');
     const paramsLoaded = await loadSubjectParameters(subjectName);
     if (!paramsLoaded) {
         alert('Failed to load subject parameters.');
         return;
     }
+    logDebug('Parameters loaded!');
     
+    logDebug('Initializing audio...');
     initializeAudio();
+    logDebug('Audio initialized!');
     
+    logDebug('Loading assets from Dropbox...');
     await loadAssetsFromDropbox();
+    logDebug('Assets loaded!');
     
-    console.log(`Experiment ready: ${totalTrials} stimuli per block`);
+    // Hide launch screen elements
+    document.getElementById('connection-status').style.display = 'none';
+    document.getElementById('toggle-debug-btn').style.display = 'none';
+    
+    logDebug(`Experiment ready: ${totalTrials} trials`);
     
     document.getElementById('instructions').style.display = 'none';
     document.getElementById('experiment-container').style.display = 'block';
     document.body.classList.add('experiment-running');
     
-    // Enter fullscreen automatically
+    logDebug('Requesting fullscreen...');
     const elem = document.documentElement;
     const fullscreenPromise = elem.requestFullscreen ? elem.requestFullscreen() 
         : elem.webkitRequestFullscreen ? elem.webkitRequestFullscreen()
         : elem.msRequestFullscreen ? elem.msRequestFullscreen()
         : Promise.reject('Fullscreen not supported');
 
-    fullscreenPromise.catch(err => {
-        console.error('Fullscreen error:', err);
-    });
-    // Hide launch screen elements
-    document.getElementById('connection-status').style.display = 'none';
-    document.getElementById('toggle-debug-btn').style.display = 'none';
-    
-    runTrial();
+    fullscreenPromise
+        .then(() => {
+            logDebug('Entered fullscreen');
+            runTrial();
+        })
+        .catch(err => {
+            logDebug('Fullscreen failed, starting anyway');
+            runTrial();
+        });
 }
 
 async function endExperiment() {

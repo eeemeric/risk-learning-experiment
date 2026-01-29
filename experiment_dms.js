@@ -168,6 +168,7 @@ async function runTrial() {
         chosenImage: response.chosenImage,
         correct: correct,
         reactionTime: response.reactionTime,
+        rewardDelivered: correct ? determineRewardFromFilename(sampleImage.path) : 0,
         timestamp: new Date().toISOString()
     });
     
@@ -360,13 +361,61 @@ async function loadErrorSound() {
 // ========================================
 
 async function deliverReward() {
+    // Determine reward amount based on the sample image filename
+    const rewardCount = determineRewardFromFilename(sampleImage.path);
+    
+    window.logDebug(`Delivering ${rewardCount} reward(s)`);
+    
     const pumpDuration = params.PumpDuration || 100;
     
-    if (typeof pumpCharacteristic !== 'undefined' && pumpCharacteristic !== null) {
-        await sendPumpCommand(pumpDuration);
-    } else if (ble && ble.connected) {
-        await writepumpdurationtoBLE(pumpDuration);
+    // Deliver multiple rewards
+    for (let i = 0; i < rewardCount; i++) {
+        window.logDebug(`Reward ${i + 1}/${rewardCount}`);
+        
+        if (typeof pumpCharacteristic !== 'undefined' && pumpCharacteristic !== null) {
+            await sendPumpCommand(pumpDuration);
+        } else if (ble && ble.connected) {
+            await writepumpdurationtoBLE(pumpDuration);
+        }
+        
+        // Wait between rewards
+        await new Promise(resolve => setTimeout(resolve, 200));
     }
+}
+
+function determineRewardFromFilename(imagePath) {
+    const filename = imagePath.split('/').pop().toLowerCase();
+    
+    // Sure options: sure1.png -> 1, sure2.png -> 2, etc.
+    if (filename.startsWith('sure')) {
+        const match = filename.match(/sure(\d+)/);
+        if (match) {
+            return parseInt(match[1]);
+        }
+    }
+    
+    // Gamble options: gamble7v1pw10.png -> 10% chance of 7, 90% chance of 1
+    if (filename.startsWith('gamble')) {
+        const match = filename.match(/gamble(\d+)v(\d+)pw(\d+)/);
+        if (match) {
+            const winAmount = parseInt(match[1]);
+            const loseAmount = parseInt(match[2]);
+            const winProbability = parseInt(match[3]);
+            
+            // Random outcome based on probability
+            const random = Math.random() * 100;
+            if (random < winProbability) {
+                window.logDebug(`Gamble WIN: ${winAmount} (${winProbability}% chance)`);
+                return winAmount;
+            } else {
+                window.logDebug(`Gamble LOSE: ${loseAmount} (${100 - winProbability}% chance)`);
+                return loseAmount;
+            }
+        }
+    }
+    
+    // Default to 1 reward if filename doesn't match
+    return 1;
 }
 
 // ========================================

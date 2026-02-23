@@ -157,7 +157,8 @@ async function requestBLEDevice(){
             };
         } else {
             options = {
-                filters: [{namePrefix: deviceName}],
+                // filters: [{namePrefix: deviceName}],
+                filters: [{namePrefix}],
                 optionalServices: ["0000a000-0000-1000-8000-00805f9b34fb"]
             };
         }

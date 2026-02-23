@@ -236,6 +236,14 @@
             </select>
         </div>
 
+        <div style="background-color: #f3e5f5; padding: 15px; margin: 15px 0; border-radius: 5px;">
+            <label for="ble-device-select"><strong>Select BLE Device:</strong></label>
+            <select id="ble-device-select">
+                <option value="BLE_Feather_nRF52840_">BLE_Feather_nRF52840_</option>
+            </select>
+            <span id="ble-status" style="margin-left: 10px;">Not connected</span>
+        </div>
+
         <div style="text-align: center; margin-top: 20px;">
             <button id="start-button" style="background-color: #4CAF50; font-size: 18px; padding: 20px 40px;">Start Experiment</button>
         </div>
@@ -282,9 +290,12 @@
             try {
                 logDebug("Requesting Bluetooth device...");
                 
+                const deviceSelect = document.getElementById('ble-device-select');
+                const deviceName = deviceSelect ? deviceSelect.value : 'BLE_Feather_nRF52840_';
+                
                 bluetoothDevice = await navigator.bluetooth.requestDevice({
                     filters: [
-                        { name: 'BLENano_Bo' }
+                        { name: deviceName }
                     ],
                     optionalServices: [0xA000]
                 });

@@ -294,14 +294,36 @@
                 const deviceSelect = document.getElementById('ble-device-select');
                 const deviceName = deviceSelect ? deviceSelect.value : 'BLE_Feather_nRF52840_';
                 
-                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                logDebug(`Looking for device: ${deviceName}`);
+                
+                // Try exact name match first
+                let options = {
                     filters: [
                         { name: deviceName }
                     ],
                     optionalServices: [0xA000]
-                });
+                };
                 
-                logDebug("Device selected, connecting...");
+                let bluetoothDevice_temp;
+                try {
+                    bluetoothDevice_temp = await navigator.bluetooth.requestDevice(options);
+                } catch (e1) {
+                    logDebug(`Exact name match failed, trying namePrefix...`);
+                    
+                    // Try namePrefix if exact name fails
+                    options = {
+                        filters: [
+                            { namePrefix: deviceName }
+                        ],
+                        optionalServices: [0xA000]
+                    };
+                    
+                    bluetoothDevice_temp = await navigator.bluetooth.requestDevice(options);
+                }
+                
+                bluetoothDevice = bluetoothDevice_temp;
+                logDebug("Device selected: " + bluetoothDevice.name);
+                logDebug("Connecting...");
                 
                 gattServer = await bluetoothDevice.gatt.connect();
                 logDebug("GATT server connected");

@@ -287,6 +287,9 @@
         let gattServer = null;
         let pumpCharacteristic = null;
 
+
+
+        
         async function connectToFeatherBLE() {
             try {
                 logDebug("Requesting Bluetooth device...");
@@ -296,56 +299,62 @@
                 
                 logDebug(`Looking for device: ${deviceName}`);
                 
-                // Try exact name match first
+                // Use acceptAllDevices to see all devices
                 let options = {
-                    filters: [
-                        { name: deviceName }
-                    ],
-                    optionalServices: [0xA000]
+                    acceptAllDevices: true,
+                    optionalServices: [
+                        "0000a000-0000-1000-8000-00805f9b34fb",
+                        0xA000
+                    ]
                 };
                 
-                let bluetoothDevice_temp;
-                try {
-                    bluetoothDevice_temp = await navigator.bluetooth.requestDevice(options);
-                } catch (e1) {
-                    logDebug(`Exact name match failed, trying namePrefix...`);
-                    
-                    // Try namePrefix if exact name fails
-                    options = {
-                        filters: [
-                            { namePrefix: deviceName }
-                        ],
-                        optionalServices: [0xA000]
-                    };
-                    
-                    bluetoothDevice_temp = await navigator.bluetooth.requestDevice(options);
+                logDebug("Showing all available devices...");
+                let bluetoothDevice_temp = await navigator.bluetooth.requestDevice(options);
+                
+                logDebug("Device selected: " + bluetoothDevice_temp.name);
+                logDebug("Device ID: " + bluetoothDevice_temp.id);
+                
+                // Check if this is the device we want
+                if (!bluetoothDevice_temp.name.includes(deviceName)) {
+                    logDebug(`Selected device name doesn't match. Expected: ${deviceName}, Got: ${bluetoothDevice_temp.name}`);
                 }
                 
                 bluetoothDevice = bluetoothDevice_temp;
-                logDebug("Device selected: " + bluetoothDevice.name);
                 logDebug("Connecting...");
                 
                 gattServer = await bluetoothDevice.gatt.connect();
                 logDebug("GATT server connected");
                 
-                const service = await gattServer.getPrimaryService(0xA000);
-                logDebug("Service found");
+                // Try to get service - try both formats
+                let service;
+                try {
+                    service = await gattServer.getPrimaryService("0000a000-0000-1000-8000-00805f9b34fb");
+                    logDebug("Service found (full UUID)");
+                } catch (e) {
+                    logDebug("Trying short UUID...");
+                    service = await gattServer.getPrimaryService(0xA000);
+                    logDebug("Service found (short UUID)");
+                }
                 
-                pumpCharacteristic = await service.getCharacteristic(0xA002);
+                pumpCharacteristic = await service.getCharacteristic("0000a002-0000-1000-8000-00805f9b34fb");
                 logDebug("Pump characteristic found");
                 
-                logDebug("Connected to Feather!");
-                document.getElementById('connection-status').innerHTML = '🟢 Feather Connected';
+                logDebug("Connected!");
+                document.getElementById('connection-status').innerHTML = '🟢 Connected';
                 document.getElementById('connection-status').style.color = 'green';
                 
                 return true;
             } catch (error) {
                 logDebug(`Connection error: ${error.message}`);
-                document.getElementById('connection-status').innerHTML = '🔴 Feather Not Found';
+                logDebug(`Error name: ${error.name}`);
+                document.getElementById('connection-status').innerHTML = '🔴 Not Found';
                 document.getElementById('connection-status').style.color = 'red';
                 return false;
             }
         }
+
+
+        
 
         async function sendPumpCommand(durationMs) {
             logDebug(`sendPumpCommand called: ${durationMs}ms`);

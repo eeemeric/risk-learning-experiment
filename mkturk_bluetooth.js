@@ -18,7 +18,7 @@ console.log("mkturk_bluetooth.js LOADED - requestBLEDevice exists: " + (typeof r
 //================ INITIALIZE BLE VARIABLE ================//
 var ble = {
     name: "BLENano_Dev",
-    namePrefix: "BLENano_",
+    namePrefix: "BLE_",
     serviceUUID: 0xFFFF,
     
     // Full 128-bit UUIDs for Feather device (lowercase!)

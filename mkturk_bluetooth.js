@@ -17,8 +17,8 @@
 console.log("mkturk_bluetooth.js LOADED - requestBLEDevice exists: " + (typeof requestBLEDevice));
 //================ INITIALIZE BLE VARIABLE ================//
 var ble = {
-    name: "BLENano_Dev",
-    namePrefix: "BLE_",
+    name: "BLE_Feather_nRF52840_",
+    namePrefix: "BLE_Feather",
     serviceUUID: 0xFFFF,
     
     // Full 128-bit UUIDs for Feather device (lowercase!)
@@ -157,8 +157,7 @@ async function requestBLEDevice(){
             };
         } else {
             options = {
-                // filters: [{namePrefix: deviceName}],
-                filters: [{namePrefix}],
+                filters: [{namePrefix: deviceName}],
                 optionalServices: ["0000a000-0000-1000-8000-00805f9b34fb"]
             };
         }

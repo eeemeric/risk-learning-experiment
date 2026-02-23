@@ -18,7 +18,7 @@ console.log("mkturk_bluetooth.js LOADED - requestBLEDevice exists: " + (typeof r
 //================ INITIALIZE BLE VARIABLE ================//
 var ble = {
     name: "BLE_Feather_nRF52840_",
-    namePrefix: "BLE_Feather",
+    namePrefix: "BLE_Feather_nRF52840_",
     serviceUUID: 0xFFFF,
     
     // Full 128-bit UUIDs for Feather device (lowercase!)
@@ -46,33 +46,7 @@ var ble = {
     tnotify_rfid: 0,
     statustext: "",
 }
-// var ble = {
-//     name: "BLENano_Bo",
-//     namePrefix: "BLENano_",
-//     serviceUUID: 0xFFFF,
-//     customserviceUUID: 0xA000,
-//     connectionUUID: 0xA001,
-//     pumpdurationUUID: 0xA002,
-//     pumpUUID: 0xA003,
-//     rfidUUID: 0xA004,
 
-//     device: [],
-//     server: [],
-//     service: [],
-//     writeconnectioncharacteristic: [],
-//     writepumpdurationcharacteristic: [],
-//     pumpcharacteristic: [],
-//     rfidcharacteristic: [],
-//     connected: false,
-
-//     ping_duration: 200,
-//     ping_interval: 5000,
-//     twrite_connection: 0,
-//     twrite_pumpduration: 0,
-//     tnotify_pump: 0,
-//     tnotify_rfid: 0,
-//     statustext: "",
-// }
 //================ INITIALIZE BLE VARIABLE (end) ================//
 
 // Convert number to 2-byte array (Int16)
@@ -146,10 +120,10 @@ async function requestBLEDevice(){
         
         // Get selected device name from dropdown (if exists)
         let selectedDevice = document.getElementById('ble-device-select');
-        let deviceName = selectedDevice ? selectedDevice.value : 'BLENano_';
+        let deviceName = selectedDevice ? selectedDevice.value : 'BLE_Feather_nRF52840_';
         
         let options;
-
+        
         if (deviceName === 'other') {
             options = {
                 acceptAllDevices: true,
@@ -157,7 +131,7 @@ async function requestBLEDevice(){
             };
         } else {
             options = {
-                filters: [{namePrefix: deviceName}],
+                filters: [{name: deviceName}],  // Use exact name match
                 optionalServices: ["0000a000-0000-1000-8000-00805f9b34fb"]
             };
         }
